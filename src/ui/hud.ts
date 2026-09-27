@@ -106,7 +106,7 @@ export class Hud {
       this.rank.dataset.r = String(ri);
     }
     this.rankBar.style.transform = `scaleX(${s.style % 1})`;
-    this.rank.parentElement!.style.opacity = s.style > 0.05 ? '1' : '0.25';
+    this.rank.parentElement!.style.opacity = s.style > 0.05 ? '1' : '0';
     this.info.innerHTML = `${s.room}${s.enemies > 0 ? ` <b>${s.enemies}</b> HOSTILE` : ''}`;
     this.bt.classList.toggle('on', s.bulletTime);
     this.hitT = Math.max(0, this.hitT - dt);

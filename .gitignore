@@ -8,3 +8,5 @@ playwright-report/
 .superpowers/
 tools/raw/
 tools/probe*.mjs
+test-results/
+playwright-report/

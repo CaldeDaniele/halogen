@@ -151,6 +151,7 @@ export class Game {
     g.applySector(0);
     g.music.preload(['title', 's1_ambient', 's1_combat']);
     g.menus = new Menus(ui, g);
+    g.renderer.onAutoDowngrade = q => { g.hud.toast(`QUALITY → ${q.toUpperCase()} (AUTO)`, '#7d8b93', 1.6); g.menus.settings.quality = q; };
     progress(0.9, 'title');
     g.startTitleScene();
     progress(1, 'ready');
@@ -571,7 +572,7 @@ export class Game {
       onStep: dt => this.step(dt),
       onRender: (alpha, frameDt) => this.frame(alpha, frameDt),
     });
-    loop.start(() => (this.mode === 'play' || this.mode === 'dead' || this.mode === 'title' || this.mode === 'victory') ? this.time.scale : 0, realDt => this.time.update(realDt));
+    loop.start(() => ((this.mode === 'play' || this.mode === 'dead' || this.mode === 'title' || this.mode === 'victory') ? this.time.scale : 0) * this.dev.timescale, realDt => this.time.update(realDt));
   }
 
   private step(dt: number) {
@@ -802,10 +803,56 @@ export class Game {
     this.frameMs = performance.now() - t0;
   }
 
+  /** ?bench — worst case from the spec: 40 ragdolls, 200 debris, 128 lights. Reports frame-time percentiles. */
+  async bench() {
+    this.menus.hide();
+    this.newRun(1);
+    (window as any).__noLockPrompt = true;
+    this.director = null;
+    const room = this.room!;
+    for (let i = 0; i < 40; i++) {
+      const a = this.spawnEnemy(i % 3 ? 'grunt' : 'skitter', room.worldSpawn(i), false);
+      a.die({ point: a.center, normal: new THREE.Vector3(0, 1, 0), dir: new THREE.Vector3(Math.random() - 0.5, 0.6, Math.random() - 0.5).normalize(), damage: 999, impulse: 12, source: 'player' });
+    }
+    const geo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+    for (let i = 0; i < 200; i++) {
+      const p = new THREE.Vector3((Math.random() - 0.5) * 20, 2 + Math.random() * 6, (Math.random() - 0.5) * 20);
+      this.debris.spawn(new THREE.Mesh(geo, this.mats.get('chunk')), p, new THREE.Quaternion(), [0.2, 0.2, 0.2], new THREE.Vector3((Math.random() - 0.5) * 6, 0, (Math.random() - 0.5) * 6));
+    }
+    const L = this.renderer.lights;
+    while (L.lights.length < 128) L.add({ pos: new THREE.Vector3((Math.random() - 0.5) * 30, 0.5 + Math.random() * 6, (Math.random() - 0.5) * 30), color: new THREE.Color().setHSL(Math.random(), 1, 0.5), intensity: 6, radius: 6 });
+    this.player.teleport(new THREE.Vector3(0, 0, 12), 0);
+    this.player.pitch = -0.15;
+    const gl = this.renderer.renderer.getContext(); const px = new Uint8Array(4);
+    const times: number[] = [];
+    for (let i = 0; i < 240; i++) {
+      const t0 = performance.now();
+      this.advance(1 / 60);
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      times.push(performance.now() - t0);
+      if (i % 30 === 0) await new Promise(r => setTimeout(r, 0));
+    }
+    times.sort((a, b) => a - b);
+    const q = (p: number) => times[Math.min(times.length - 1, Math.floor(p * times.length))].toFixed(1);
+    const sz = this.renderer.drawSize;
+    const res = `BENCH ${sz.x}x${sz.y} ${this.renderer.quality}: p50 ${q(0.5)}ms p95 ${q(0.95)}ms p99 ${q(0.99)}ms · ragdolls ${this.corpses.size} debris ${this.debris.budget.size} lights ${L.lights.length}`;
+    this.dev.benchResult = res;
+    this.dev.visible = true;
+    console.log(res);
+    (window as any).__bench = res;
+    return res;
+  }
+
   /** Debug/test hook: advance the simulation deterministically (independent of rAF) and render once. */
   advance(seconds: number, input?: { keys?: string[]; fire?: boolean; yaw?: number; pitch?: number }) {
     const n = Math.round(seconds * 120);
+    if (input?.yaw !== undefined) this.player.yaw = input.yaw;
+    if (input?.pitch !== undefined) this.player.pitch = input.pitch;
     for (let i = 0; i < n; i++) {
+      // keep the camera (weapon aim) in sync with the player every step
+      const eye = this.player.pos.clone(); eye.y += this.player.eyeOffset;
+      this.rig.apply(this.renderer.camera, eye, this.player, STEP, h => this.renderer.setHFov(h));
+      this.renderer.camera.updateMatrixWorld();
       if (input?.keys) for (const k of input.keys) this.input.down.add(k);
       if (input?.fire) this.input.down.add('Mouse0');
       this.time.update(STEP);
@@ -815,8 +862,6 @@ export class Game {
     }
     if (input?.keys) for (const k of input.keys) this.input.down.delete(k);
     if (input?.fire) this.input.down.delete('Mouse0');
-    if (input?.yaw !== undefined) this.player.yaw = input.yaw;
-    if (input?.pitch !== undefined) this.player.pitch = input.pitch;
     this.frame(1, 1 / 60);
   }
 

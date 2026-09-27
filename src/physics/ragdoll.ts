@@ -63,9 +63,10 @@ export class ArticulatedBody {
         .setRotation({ x: bodyQ.x, y: bodyQ.y, z: bodyQ.z, w: bodyQ.w }).setCcdEnabled(false).setLinearDamping(0.1).setAngularDamping(0.6));
       let cd: RAPIER.ColliderDesc;
       const s = d.size.map(v => v * scale);
-      if (d.shape === 'capsule') cd = RAPIER.ColliderDesc.capsule(s[0], s[1]);
-      else if (d.shape === 'ball') cd = RAPIER.ColliderDesc.ball(s[0]);
-      else cd = RAPIER.ColliderDesc.cuboid(s[0], s[1], s[2]);
+      // hitboxes are a little more generous than the visuals: thin limbs should still be hittable
+      if (d.shape === 'capsule') cd = RAPIER.ColliderDesc.capsule(s[0], s[1] * 1.35);
+      else if (d.shape === 'ball') cd = RAPIER.ColliderDesc.ball(s[0] * 1.05);
+      else cd = RAPIER.ColliderDesc.cuboid(s[0] * 1.1, s[1] * 1.1, s[2] * 1.1);
       const vol = d.shape === 'box' ? 8 * s[0] * s[1] * s[2] : d.shape === 'ball' ? 4.19 * s[0] ** 3 : Math.PI * s[1] ** 2 * (2 * s[0] + 1.33 * s[1]);
       cd.setDensity((d.mass * scale ** 3) / Math.max(vol, 1e-4)).setFriction(0.9).setRestitution(0.05).setCollisionGroups(LIVE_GROUPS)
         .setActiveEvents(RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS).setContactForceEventThreshold(40 * scale);

@@ -50,7 +50,7 @@ void main() {
     int ccount = int(texelFetch(uClusterTex, ivec2(0, crow), 0).r);
     // drifting dust density
     float n = vnoise(p * 0.6 + vec3(0.0, time * 0.15, time * 0.07));
-    float dens = density * (0.55 + 0.9 * n);
+    float dens = density * (0.8 + 0.4 * n);
     vec3 scat = vec3(0.0);
     for (int ci = 0; ci < 32; ci++) {
       if (ci >= ccount) break;
@@ -77,7 +77,9 @@ void main() {
     }
     acc += scat * dens * stepLen;
   }
-  fragColor = vec4(acc * 0.08, 1.0);
+  // soft-clip so a point-blank explosion can't white out the whole haze
+  vec3 v = acc * 0.08;
+  fragColor = vec4(v / (1.0 + max(max(v.r, v.g), v.b) * 0.6), 1.0);
 }
 `;
 

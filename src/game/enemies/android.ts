@@ -116,7 +116,7 @@ export class Android {
     const joint = this.ctx.mats.get('joint');
     const armor = this.armorMat();
     const mesh = (gm: THREE.BufferGeometry, m: THREE.Material, x = 0, y = 0, z = 0) => {
-      const me = new THREE.Mesh(gm, m); me.position.set(x, y, z); me.castShadow = true; g.add(me); return me;
+      const me = new THREE.Mesh(gm, m); me.position.set(x, y, z); me.castShadow = m !== this.emissiveMat && m !== joint; g.add(me); return me;
     };
     if (d.shape === 'capsule') {
       const k = `cap${s[0].toFixed(3)}_${s[1].toFixed(3)}`;
@@ -161,9 +161,11 @@ export class Android {
 
   get alive() { return this.state !== 'dead'; }
   get position() { return this.body.position; }
+  /** Visual centre of mass: the root segment (pelvis / body / core), lifted to the chest on bipeds. */
   get center() {
-    if (this.state === 'alive') return this.body.position.clone().add(new THREE.Vector3(0, (this.stats.flying ? 0 : 1.1) * this.stats.scale, 0));
-    return this.body.comPosition;
+    const c = this.body.comPosition;
+    if (!this.stats.quad && !this.stats.flying && this.state === 'alive') c.y += 0.25 * this.stats.scale;
+    return c;
   }
   get head() { const h = this.body.segs.find(s => s.def.head)!; const t = h.body.translation(); return new THREE.Vector3(t.x, t.y, t.z); }
 

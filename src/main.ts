@@ -20,6 +20,7 @@ async function main() {
   try {
     const game = await Game.create(document.getElementById('c') as HTMLCanvasElement, document.getElementById('ui')!, setBoot);
     (window as any).__halogen = game;
+    if (new URLSearchParams(location.search).has('bench')) setTimeout(() => game.bench(), 500);
     document.getElementById('boot')?.classList.add('gone');
     setTimeout(() => document.getElementById('boot')?.remove(), 800);
   } catch (e) {

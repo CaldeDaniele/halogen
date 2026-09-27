@@ -42,7 +42,10 @@ function buildViewmodel(ctx: Ctx, id: string): { root: THREE.Group; muzzle: THRE
     box(0.045, 0.12, 0.06, 0, -0.08, 0.04, joint).rotation.x = 0.25;
     cyl(0.016, 0.16, 0, 0.012, -0.23, metal);
     for (let i = 0; i < 3; i++) glow.push(cyl(0.022, 0.012, 0, 0.012, -0.14 - i * 0.035, neon));
-    glow.push(box(0.058, 0.006, 0.16, 0, 0.04, -0.06, neon));
+    // thin side light-lines instead of a slab on top
+    glow.push(box(0.004, 0.01, 0.2, -0.03, 0.012, -0.07, neon));
+    glow.push(box(0.004, 0.01, 0.2, 0.03, 0.012, -0.07, neon));
+    box(0.05, 0.02, 0.12, 0, 0.047, -0.02, metal); // rear sight block
     muzzle.position.set(0, 0.012, -0.32);
   } else if (id === 'scatter') {
     box(0.09, 0.1, 0.42, 0, 0, -0.1, metal);
@@ -57,7 +60,7 @@ function buildViewmodel(ctx: Ctx, id: string): { root: THREE.Group; muzzle: THRE
     box(0.05, 0.12, 0.07, 0, -0.1, 0.08, joint).rotation.x = 0.25;
     box(0.012, 0.04, 0.5, -0.03, 0.05, -0.38, metal);
     box(0.012, 0.04, 0.5, 0.03, 0.05, -0.38, metal);
-    glow.push(box(0.03, 0.01, 0.46, 0, 0.05, -0.38, neon));
+    glow.push(box(0.008, 0.008, 0.46, 0, 0.05, -0.38, neon));
     cyl(0.03, 0.08, 0, -0.02, 0.02, joint);
     muzzle.position.set(0, 0.05, -0.64);
   } else {

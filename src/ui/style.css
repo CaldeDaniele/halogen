@@ -195,3 +195,7 @@ kbd { font-family: var(--mono); font-size: 11px; border: 1px solid rgba(255, 255
 .rmap .nd text { fill: var(--dim); font-size: 12px; text-anchor: middle; font-family: var(--font); }
 .rmap .nd.cur circle { stroke: var(--cyan); fill: rgba(25, 240, 255, .15); } .rmap .nd.cur text { fill: #fff; }
 .rmap .nd.done circle { fill: rgba(255, 255, 255, .06); }
+.dev-heat { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; opacity: .7; mix-blend-mode: screen; }
+.dev-labels { position: absolute; inset: 0; }
+.dev-labels .dl { position: absolute; left: 0; top: 0; font: 10px/1.35 var(--mono); color: #bfe; background: rgba(0, 0, 0, .55); padding: 3px 6px; border-left: 2px solid var(--cyan); white-space: nowrap; margin: -40px 0 0 -40px; }
+.dev-labels .dl b { color: #fff; }

@@ -43,6 +43,12 @@ export class Renderer {
   /** sector grade */
   grade = { hue: 0, sat: 0.05, contrast: 0.08, bright: 0 };
   hFov = 103;
+  private frameNo = 0;
+  /** auto quality governor */
+  autoQuality = true;
+  private slowT = 0;
+  private ema = 16;
+  onAutoDowngrade?: (q: Quality) => void;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false, depth: true });
@@ -50,6 +56,7 @@ export class Renderer {
     this.renderer.toneMapping = THREE.NoToneMapping;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.info.autoReset = false;
     this.camera = new THREE.PerspectiveCamera(75, 16 / 9, 0.05, 220);
     this.camera.rotation.order = 'YXZ';
     this.scene.add(this.camera);
@@ -106,6 +113,18 @@ export class Renderer {
     this.buildComposer();
   }
 
+  private governor(dt: number) {
+    if (!this.autoQuality || dt <= 0 || dt > 0.2 || document.hidden) return;
+    this.ema += (dt * 1000 - this.ema) * 0.05;
+    this.slowT = this.ema > 21 ? this.slowT + dt : Math.max(0, this.slowT - dt * 2);
+    if (this.slowT > 4) {
+      const order: Quality[] = ['low', 'medium', 'high', 'ultra'];
+      const i = order.indexOf(this.quality);
+      if (i > 0) { this.setQuality(order[i - 1]); this.onAutoDowngrade?.(order[i - 1]); }
+      this.slowT = 0; this.ema = 16;
+    }
+  }
+
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
     const pr = Math.min(window.devicePixelRatio, 2) * this.cfg.pixelRatio;
@@ -140,6 +159,12 @@ export class Renderer {
     this.bc.brightness = this.grade.bright;
     this.vignette.darkness = 0.62 + this.desat * 0.25;
     this.volumetric.time += realDt;
+    // shadow maps: every frame on ultra, every other frame otherwise (ragdoll shadows at 30 Hz are imperceptible)
+    this.frameNo++;
+    this.renderer.shadowMap.autoUpdate = false;
+    this.renderer.shadowMap.needsUpdate = this.quality === 'ultra' || this.frameNo % 2 === 0;
+    this.governor(realDt);
+    this.renderer.info.reset();
     this.composer.render(realDt);
   }
 }
