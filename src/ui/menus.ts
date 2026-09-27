@@ -8,7 +8,7 @@ const META = 'halogen.meta.v1';
 function load<T>(k: string, d: T): T { try { const s = localStorage.getItem(k); return s ? { ...d, ...JSON.parse(s) } : d; } catch { return d; } }
 function save(k: string, v: unknown) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } }
 
-export interface Meta { runs: number; wins: number; bestScore: number; bestSector: number }
+export interface Meta { runs: number; wins: number; bestScore: number; bestSector: number; totalKills: number; unlocked: string[] }
 
 /** Title / pause / settings / end-of-run screens. */
 export class Menus {
@@ -21,7 +21,7 @@ export class Menus {
     this.el = document.createElement('div'); this.el.className = 'menu'; ui.appendChild(this.el);
     this.fadeEl = document.createElement('div'); this.fadeEl.className = 'fader'; ui.appendChild(this.fadeEl);
     this.settings = load(KEY, DEFAULTS);
-    this.meta = load<Meta>(META, { runs: 0, wins: 0, bestScore: 0, bestSector: 0 });
+    this.meta = load<Meta>(META, { runs: 0, wins: 0, bestScore: 0, bestSector: 0, totalKills: 0, unlocked: [] });
     this.apply();
   }
 
@@ -45,6 +45,8 @@ export class Menus {
     return b;
   }
 
+  saveMeta() { save(META, this.meta); }
+
   showTitle() {
     this.el.className = 'menu title interactive';
     const seed = new URLSearchParams(location.search).get('seed');
@@ -55,7 +57,7 @@ export class Menus {
         <div class="t-sub">A PHYSICS-DRIVEN ROGUELIKE SHOOTER · BUILT FOR THE BROWSER</div>
         <div class="t-btns"></div>
         <div class="t-seed"><label>SEED</label><input id="seed" placeholder="random" value="${seed ?? ''}" spellcheck="false"/></div>
-        <div class="t-meta">RUNS ${this.meta.runs} · CLEARS ${this.meta.wins} · BEST ${this.meta.bestScore}</div>
+        <div class="t-meta">RUNS ${this.meta.runs} · CLEARS ${this.meta.wins} · BEST ${this.meta.bestScore} · UNLOCKS ${this.meta.unlocked.length}/6</div>
       </div>
       <div class="t-right">
         <div class="t-how">

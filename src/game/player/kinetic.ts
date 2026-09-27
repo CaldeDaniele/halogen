@@ -58,7 +58,8 @@ export class KineticHand {
     const seen = new Set<number>();
     const consider = (col: RAPIER.Collider, d: number) => {
       const owner = ctx.phys.ownerOf(col.handle) as Owner | undefined;
-      const android: Android | undefined = owner?.android;
+      // severed limbs are free pieces; grabbing one never grabs the rest of the android
+      const android: Android | undefined = owner?.severed ? undefined : owner?.android;
       if (android?.isBoss) return;
       const body = android ? (android.body.seg('torso') ?? android.body.root).body : col.parent();
       if (!body || seen.has(body.handle)) return;
@@ -75,11 +76,11 @@ export class KineticHand {
     if (!cands.length) { ctx.sfx.play('kineticFail'); return; }
     const pick = cands.slice(0, run.mods.multiGrab);
     let cost = 0;
-    for (const c of pick) cost += c.owner?.android?.state === 'alive' ? COST_ALIVE : COST_GRAB;
+    for (const c of pick) cost += !c.owner?.severed && c.owner?.android?.state === 'alive' ? COST_ALIVE : COST_GRAB;
     if (run.lumen < cost) { ctx.sfx.play('kineticFail'); ctx.hud.toast('NOT ENOUGH LUMEN', '#ffb02e'); return; }
     run.lumen -= cost;
     pick.forEach((c, i) => {
-      const android: Android | undefined = c.owner?.android;
+      const android: Android | undefined = c.owner?.severed ? undefined : c.owner?.android;
       if (android) android.grab();
       const bodies = android ? android.body.segs.filter(s => !s.detached).map(s => s.body) : [c.body];
       let mass = 0;

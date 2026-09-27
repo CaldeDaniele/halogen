@@ -60,6 +60,8 @@ export class Android {
   gun?: THREE.Object3D;
   /** set true for bosses that manage limbs themselves */
   isBoss = false;
+  /** boss hook: called on every hit while alive; may return a damage multiplier */
+  onSegHit?: (seg: Seg, h: HitInfo, dmg: number) => number;
   private ownerCache = new Map<Seg, Owner>();
   private shadeMats: THREE.Material[] = [];
 
@@ -195,6 +197,7 @@ export class Android {
       }
     }
     if (this.shield > 0) { const s = Math.min(this.shield, dmg); this.shield -= s; dmg -= s; if (this.shield <= 0) ctx.sfx.play('shieldBreak', { pos: h.point }); }
+    if (this.onSegHit) dmg *= this.onSegHit(seg, h, dmg);
     if (h.tags?.has('thermite')) this.burning = Math.max(this.burning, 3);
     this.hp -= dmg;
     this.lastHitBy = h.source;

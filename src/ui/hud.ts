@@ -35,6 +35,7 @@ export class Hud {
   private toastT = 0;
   private lastRank = -1;
   private cross: HTMLElement;
+  private bossEl: HTMLElement; private bossFill: HTMLElement; private bossName: HTMLElement;
 
   constructor(ui: HTMLElement) {
     const r = this.root = el('div', 'hud', ui);
@@ -70,6 +71,10 @@ export class Hud {
     this.toastEl = el('div', 'hud-toast', r);
     this.info = el('div', 'hud-info', r);
     this.prompt = el('div', 'hud-prompt', r);
+    this.bossEl = el('div', 'hud-boss', r);
+    this.bossName = el('div', 'bname', this.bossEl);
+    const bb = el('div', 'bbar', this.bossEl); this.bossFill = el('div', 'bfill', bb);
+    this.bossEl.style.display = 'none';
     el('div', 'hud-keys', r, 'WASD move · SPACE jump ×2 · SHIFT dash · CTRL slide · LMB fire · RMB hold/release kinetic · R reload · 1/2 swap · F1 dev');
   }
 
@@ -111,6 +116,14 @@ export class Hud {
     this.lowHp.style.opacity = hpK < 0.35 ? String(0.35 + 0.25 * Math.sin(performance.now() / 180)) : '0';
     this.toastT -= dt;
     if (this.toastT <= 0) this.toastEl.classList.remove('on');
+  }
+
+  boss(name: string | null, frac = 1, state = '') {
+    if (!name) { this.bossEl.style.display = 'none'; return; }
+    this.bossEl.style.display = '';
+    this.bossName.innerHTML = name + (state ? ` <span>${state}</span>` : '');
+    this.bossFill.style.transform = `scaleX(${Math.max(0, frac)})`;
+    this.bossEl.classList.toggle('shield', state === 'SHIELDED');
   }
 
   hitmarker(kind: 'hit' | 'kill' | 'head') {

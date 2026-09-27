@@ -43,3 +43,21 @@ describe('cards', () => {
     for (const c of CARDS) { expect(c.name.length).toBeGreaterThan(0); expect(c.desc.length).toBeGreaterThan(0); }
   });
 });
+
+describe('meta unlocks', () => {
+  it('never offers locked cards', async () => {
+    const { LOCKED_AT_START } = await import('../src/game/run/cards');
+    const run = new RunState(1);
+    const locked = new Set(LOCKED_AT_START);
+    for (let s = 0; s < 120; s++) for (const c of offerCards(run, new Rng(s), 3, { rare: true, locked })) expect(locked.has(c.id)).toBe(false);
+  });
+  it('unlockFor returns the right cards per milestone and only once', async () => {
+    const { unlockFor } = await import('../src/game/run/cards');
+    const have = new Set<string>();
+    expect(unlockFor({ bossSector: 0 }, have)).toEqual(['w_ion', 'phasedash']);
+    ['w_ion', 'phasedash'].forEach(x => have.add(x));
+    expect(unlockFor({ bossSector: 0 }, have)).toEqual([]);
+    expect(unlockFor({ totalKills: 75 }, have)).toEqual(['singularity']);
+    expect(unlockFor({ victory: true }, have)).toEqual(['glasscannon']);
+  });
+});

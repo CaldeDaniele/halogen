@@ -20,7 +20,7 @@ import { buildNeonEnvironment } from '../render/envmap';
 import { LightType } from '../render/lights';
 import type { Ctx, GameEvents, HitInfo, Owner } from './types';
 import { RunState } from './run/state';
-import { offerCards, applyCard, cardById } from './run/cards';
+import { offerCards, applyCard, cardById, LOCKED_AT_START, unlockFor, Milestone } from './run/cards';
 import { buildSectorMap, SectorMap, MapNode } from './level/runmap';
 import { generateRoom, PALETTES } from './level/generator';
 import { Room, Door } from './level/builder';
@@ -49,7 +49,7 @@ const SECTOR_NAMES = ['FOUNDRY', 'GRID', 'FILAMENT'];
 const GRADES = [
   { hue: -0.02, sat: 0.05, contrast: 0.1, bright: 0, fog: 0x010204, ext: 0.008, dens: 0.7 },
   { hue: 0.02, sat: 0.08, contrast: 0.12, bright: 0.01, fog: 0x040201, ext: 0.01, dens: 0.85 },
-  { hue: -0.03, sat: 0.12, contrast: 0.12, bright: 0, fog: 0x030104, ext: 0.009, dens: 0.9 },
+  { hue: -0.03, sat: 0.12, contrast: 0.14, bright: -0.01, fog: 0x020103, ext: 0.008, dens: 0.6 },
 ];
 
 export class Game {
@@ -130,7 +130,8 @@ export class Game {
       hud: {
         hitmarker: k => g.hud.hitmarker(k),
         damage: from => g.hud.damage(from ? Hud.angleTo(g.renderer.camera, from) : null),
-        toast: (m, c) => g.hud.toast(m, c),
+        toast: (m, c, t) => g.hud.toast(m, c, t),
+        feedMsg: (m, p, c) => g.hud.feedMsg(m, p, c),
       },
       run: g.run, game: g,
     };
@@ -382,6 +383,7 @@ export class Game {
     ev.on('enemyKilled', ({ hit, enemy, headshot, kinetic, bulletTime, pos }) => {
       const run = this.run;
       run.kills++;
+      this.menus.meta.totalKills++;
       if (headshot) run.headshots++;
       if (kinetic) run.kineticKills++;
       this.hud.hitmarker(headshot ? 'head' : 'kill');
@@ -433,6 +435,7 @@ export class Game {
     ev.on('explosion', () => { this.music.intensity = Math.min(1, this.music.intensity + 0.2); });
   }
 
+  onFixtureBrokenPublic(f: Fixture, byPlayer: boolean) { this.onFixtureBroken(f, byPlayer); }
   private onFixtureBroken(f: Fixture, byPlayer: boolean) {
     this.run.lightsBroken++;
     if (byPlayer) {
@@ -458,7 +461,9 @@ export class Game {
     this.hud.toast('ROOM CLEAR', '#e8f4f8', 1.8);
     this.events.emit('roomCleared', { room });
     this.music.intensity = 0;
+    this.unlock({ totalKills: this.menus.meta.totalKills });
     if (this.node.type === 'boss') {
+      this.unlock({ bossSector: this.run.sector });
       this.music.sting('victory');
       if (this.run.sector >= 2) { this.later(2.5, () => this.victory()); return; }
     }
@@ -478,7 +483,8 @@ export class Game {
     if (reward === 'none') return;
     if (reward === 'heal') { run.heal(50); this.hud.toast('+50 INTEGRITY', '#50ff9a'); }
     if (reward === 'lumen') { run.lumen = run.maxLumen; run.focus = Math.max(run.focus, 0.5); }
-    const offers = offerCards(run, this.rng.fork('cards' + run.roomsCleared + run.sector), 3, { rare: reward === 'rare', weaponsOnly: reward === 'weapon' });
+    const locked = new Set(LOCKED_AT_START.filter(id => !this.menus.meta.unlocked.includes(id)));
+    const offers = offerCards(run, this.rng.fork('cards' + run.roomsCleared + run.sector), 3, { rare: reward === 'rare', weaponsOnly: reward === 'weapon', locked });
     const tags = new Set<string>(run.cards.flatMap(id => cardById(id)?.tags ?? []));
     this.mode = 'cards';
     this.input.exitLock();
@@ -535,7 +541,16 @@ export class Game {
     this.events.emit('playerDied', undefined);
     setTimeout(() => { this.input.exitLock(); this.menus.showEnd(false); }, 1400);
   }
+  private unlock(m: Milestone) {
+    const meta = this.menus.meta;
+    const got = unlockFor(m, new Set(meta.unlocked));
+    got.forEach((id, i) => this.later(1.5 + i * 1.8, () => this.hud.toast(`UNLOCKED · ${cardById(id)?.name.toUpperCase()}`, '#ff2bd6', 1.8)));
+    meta.unlocked.push(...got);
+    this.menus.saveMeta();
+  }
+
   private victory() {
+    this.unlock({ victory: true });
     this.mode = 'victory';
     this.input.exitLock();
     this.menus.showEnd(true);
@@ -778,6 +793,7 @@ export class Game {
       }, realDt);
     }
     this.hud.setPrompt(this.mode === 'play' && !this.input.locked && !(window as any).__noLockPrompt ? 'CLICK TO ENGAGE' : null);
+    this.hud.boss(this.boss && !this.boss.dead && this.mode !== 'title' ? this.boss.name : null, this.boss ? this.boss.hp / this.boss.maxHp : 0, this.boss?.state ?? '');
     this.renderer.wet.wetness = 1;
     this.renderer.render(realDt, simDt);
     this.dev.update(realDt);
@@ -828,6 +844,9 @@ export class Game {
             if (target.state === 'alive' && !target.isBoss) target.stagger(undefined, undefined, 1.3);
             this.sfx.play('thud', { pos: point, gain: 1.5 });
             this.rig.addTrauma(0.12);
+          } else if (ownerB?.kind === 'boss') {
+            ownerB.hit?.({ point, normal: new THREE.Vector3(0, 1, 0), dir: new THREE.Vector3(v.x, v.y, v.z).normalize(), damage: THREE.MathUtils.clamp(0.5 * Math.min(rec.mass, 120) * speed * speed * 0.02, 20, 300), impulse: speed * 0.5, source: 'kinetic', weapon: 'kinetic' });
+            this.sfx.play('thud', { pos: point, gain: 1.5 }); this.rig.addTrauma(0.15);
           } else if (ownerB?.kind === 'fixture') ownerB.hit?.({ point, normal: new THREE.Vector3(), dir: new THREE.Vector3(), damage: 99, impulse: 0, source: 'kinetic' });
           else if (ownerB?.kind === 'prop' && ownerB.prop !== undefined) ownerB.hit?.({ point, normal: new THREE.Vector3(0, 1, 0), dir: new THREE.Vector3(v.x, v.y, v.z).normalize(), damage: speed * 3, impulse: speed * 0.5, source: 'kinetic' });
           if (rec.android && rec.android.state !== 'dead' && speed > 12) {

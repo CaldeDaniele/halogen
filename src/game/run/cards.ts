@@ -77,12 +77,26 @@ export const cardById = (id: string) => ALL.get(id);
 
 const RW: Record<Rarity, number> = { common: 1, rare: 0.35, legendary: 0.09 };
 
-export function offerCards(run: RunState, rng: Rng, count = 3, opts: { rare?: boolean; weaponsOnly?: boolean } = {}): CardDef[] {
+/** Meta-progression: these start locked and are earned across runs. */
+export const LOCKED_AT_START = ['w_ion', 'phasedash', 'singularity', 'puppeteer', 'refraction', 'glasscannon'];
+
+export interface Milestone { bossSector?: number; totalKills?: number; victory?: boolean }
+export function unlockFor(m: Milestone, have: Set<string>): string[] {
+  const out: string[] = [];
+  if (m.bossSector !== undefined && m.bossSector >= 0) out.push('w_ion', 'phasedash');
+  if (m.bossSector !== undefined && m.bossSector >= 1) out.push('puppeteer', 'refraction');
+  if ((m.totalKills ?? 0) >= 75) out.push('singularity');
+  if (m.victory) out.push('glasscannon');
+  return out.filter(x => !have.has(x));
+}
+
+export function offerCards(run: RunState, rng: Rng, count = 3, opts: { rare?: boolean; weaponsOnly?: boolean; locked?: Set<string> } = {}): CardDef[] {
   const owned = new Set(run.cards);
   const ownedTags = new Map<Tag, number>();
   for (const id of run.cards) for (const t of cardById(id)?.tags ?? []) ownedTags.set(t, (ownedTags.get(t) ?? 0) + 1);
   let pool = CARDS.filter(cd => {
     if (cd.unique && owned.has(cd.id)) return false;
+    if (opts.locked?.has(cd.id)) return false;
     if (cd.id.startsWith('w_') && run.weapons.includes(cd.id.slice(2) === 'scatter' ? 'scatter' : cd.id.slice(2))) return false;
     if (opts.weaponsOnly && !cd.id.startsWith('w_')) return false;
     return true;

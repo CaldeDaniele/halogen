@@ -74,7 +74,7 @@ export interface Ctx {
   player: PlayerController;
   rig: CameraRig;
   /** set by Game each frame */
-  hud: { hitmarker(kind: 'hit' | 'kill' | 'head'): void; damage(from?: THREE.Vector3): void; toast(msg: string, color?: string): void };
+  hud: { hitmarker(kind: 'hit' | 'kill' | 'head'): void; damage(from?: THREE.Vector3): void; toast(msg: string, color?: string, t?: number): void; feedMsg(text: string, pts: number, color?: string): void };
   run: any;
   game: any;
 }
