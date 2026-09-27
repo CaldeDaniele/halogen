@@ -77,7 +77,7 @@ export function explode(ctx: Ctx, pos: THREE.Vector3, radius: number, damage: nu
   sp.smokeAt(pos, 16, 0x2a2628, 1.4, 2.2, 1.5, 3);
   sp.glowAt(pos, color, radius * 1.6, 0.25);
   sp.glowAt(pos, 0xffe0b0, radius * 0.8, 0.12);
-  ctx.lights.flash(pos, color, 90, radius * 3, 0.45);
+  ctx.lights.flash(pos, color, 40, radius * 2.2, 0.35);
   ctx.decals.add(new THREE.Vector3(pos.x, ctx.particles.floorY + 0.005, pos.z), new THREE.Vector3(0, 1, 0), radius * 0.9, color, 1.5);
   ctx.sfx.play('explosion', { pos });
   const dist = ctx.camera.position.distanceTo(pos);
