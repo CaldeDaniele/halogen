@@ -1,0 +1,500 @@
+[
+ {
+  "id": "music/s1_ambient",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:27:44.439Z"
+ },
+ {
+  "id": "music/title",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:27:48.309Z"
+ },
+ {
+  "id": "music/s1_combat",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:27:51.567Z"
+ },
+ {
+  "id": "music/s1_boss",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:28:18.720Z"
+ },
+ {
+  "id": "music/s2_combat",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:28:21.908Z"
+ },
+ {
+  "id": "music/s2_ambient",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:28:33.965Z"
+ },
+ {
+  "id": "music/s2_boss",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:28:51.484Z"
+ },
+ {
+  "id": "music/s3_ambient",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:28:55.384Z"
+ },
+ {
+  "id": "music/death",
+  "model": "google/lyria-3-clip-preview",
+  "cost": 0.04,
+  "at": "2026-09-27T12:29:04.208Z"
+ },
+ {
+  "id": "music/s3_combat",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:29:08.897Z"
+ },
+ {
+  "id": "music/victory",
+  "model": "google/lyria-3-clip-preview",
+  "cost": 0.04,
+  "at": "2026-09-27T12:29:13.926Z"
+ },
+ {
+  "id": "music/s3_boss",
+  "model": "google/lyria-3-pro-preview",
+  "cost": 0.08,
+  "at": "2026-09-27T12:29:19.675Z"
+ },
+ {
+  "id": "tex/concrete_stained",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033615,
+  "at": "2026-09-27T12:29:26.058Z"
+ },
+ {
+  "id": "tex/concrete_smooth",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336145,
+  "at": "2026-09-27T12:29:26.079Z"
+ },
+ {
+  "id": "tex/concrete_formwork",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361575,
+  "at": "2026-09-27T12:29:26.350Z"
+ },
+ {
+  "id": "tex/metal_brushed",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361375,
+  "at": "2026-09-27T12:29:29.860Z"
+ },
+ {
+  "id": "tex/metal_diamond",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361375,
+  "at": "2026-09-27T12:29:30.211Z"
+ },
+ {
+  "id": "tex/metal_rusted",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361425,
+  "at": "2026-09-27T12:29:31.025Z"
+ },
+ {
+  "id": "tex/floor_tiles",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033616,
+  "at": "2026-09-27T12:29:33.988Z"
+ },
+ {
+  "id": "tex/armor_ceramic",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361625,
+  "at": "2026-09-27T12:29:37.506Z"
+ },
+ {
+  "id": "tex/hazard",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336145,
+  "at": "2026-09-27T12:29:39.963Z"
+ },
+ {
+  "id": "tex/ceiling_panels",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336145,
+  "at": "2026-09-27T12:29:40.411Z"
+ },
+ {
+  "id": "signs/stack",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336125,
+  "at": "2026-09-27T12:29:50.084Z"
+ },
+ {
+  "id": "signs/obey",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361275,
+  "at": "2026-09-27T12:29:50.135Z"
+ },
+ {
+  "id": "tex/pipes_wall",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361425,
+  "at": "2026-09-27T12:29:50.745Z"
+ },
+ {
+  "id": "signs/sector1",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361425,
+  "at": "2026-09-27T12:29:53.752Z"
+ },
+ {
+  "id": "signs/sector2",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361425,
+  "at": "2026-09-27T12:29:53.897Z"
+ },
+ {
+  "id": "signs/sector3",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361425,
+  "at": "2026-09-27T12:29:55.099Z"
+ },
+ {
+  "id": "signs/exit",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033613,
+  "at": "2026-09-27T12:29:58.149Z"
+ },
+ {
+  "id": "art/title",
+  "model": "google/gemini-3-pro-image",
+  "cost": 0.138714,
+  "at": "2026-09-27T12:30:13.227Z"
+ },
+ {
+  "id": "art/sector1",
+  "model": "google/gemini-3-pro-image",
+  "cost": 0.138108,
+  "at": "2026-09-27T12:30:13.404Z"
+ },
+ {
+  "id": "art/sector2",
+  "model": "google/gemini-3-pro-image",
+  "cost": 0.138424,
+  "at": "2026-09-27T12:30:24.635Z"
+ },
+ {
+  "id": "art/boss_foreman",
+  "model": "google/gemini-3-pro-image",
+  "cost": 0.137962,
+  "at": "2026-09-27T12:30:38.328Z"
+ },
+ {
+  "id": "art/sector3",
+  "model": "google/gemini-3-pro-image",
+  "cost": 0.138356,
+  "at": "2026-09-27T12:30:39.852Z"
+ },
+ {
+  "id": "art/boss_switchboard",
+  "model": "google/gemini-3-pro-image",
+  "cost": 0.138752,
+  "at": "2026-09-27T12:30:50.555Z"
+ },
+ {
+  "id": "art/boss_filament",
+  "model": "google/gemini-3-pro-image",
+  "cost": 0.138852,
+  "at": "2026-09-27T12:31:04.379Z"
+ },
+ {
+  "id": "cards/w_rail",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03362,
+  "at": "2026-09-27T12:31:08.898Z"
+ },
+ {
+  "id": "cards/w_arc",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361975,
+  "at": "2026-09-27T12:31:14.182Z"
+ },
+ {
+  "id": "cards/w_scatter",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336195,
+  "at": "2026-09-27T12:31:15.066Z"
+ },
+ {
+  "id": "cards/w_ion",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03362,
+  "at": "2026-09-27T12:31:19.727Z"
+ },
+ {
+  "id": "cards/ricochet",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336195,
+  "at": "2026-09-27T12:31:23.125Z"
+ },
+ {
+  "id": "cards/chain",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361925,
+  "at": "2026-09-27T12:31:24.675Z"
+ },
+ {
+  "id": "cards/overpressure",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033618,
+  "at": "2026-09-27T12:31:26.600Z"
+ },
+ {
+  "id": "cards/volatile",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033619,
+  "at": "2026-09-27T12:31:30.341Z"
+ },
+ {
+  "id": "cards/quickcycle",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336185,
+  "at": "2026-09-27T12:31:36.201Z"
+ },
+ {
+  "id": "cards/deepmag",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361875,
+  "at": "2026-09-27T12:31:37.719Z"
+ },
+ {
+  "id": "cards/headhunter",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033619,
+  "at": "2026-09-27T12:31:41.052Z"
+ },
+ {
+  "id": "cards/tungsten",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361875,
+  "at": "2026-09-27T12:31:46.226Z"
+ },
+ {
+  "id": "cards/thermite",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033619,
+  "at": "2026-09-27T12:31:48.251Z"
+ },
+ {
+  "id": "cards/overcharge",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:31:51.287Z"
+ },
+ {
+  "id": "cards/tether",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033619,
+  "at": "2026-09-27T12:31:56.907Z"
+ },
+ {
+  "id": "cards/singularity",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361875,
+  "at": "2026-09-27T12:32:00.207Z"
+ },
+ {
+  "id": "cards/heavyhand",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:32:01.213Z"
+ },
+ {
+  "id": "cards/siphon",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336195,
+  "at": "2026-09-27T12:32:06.312Z"
+ },
+ {
+  "id": "cards/puppeteer",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:32:09.926Z"
+ },
+ {
+  "id": "cards/lumenwell",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:32:10.440Z"
+ },
+ {
+  "id": "cards/shrapnel",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336185,
+  "at": "2026-09-27T12:32:12.769Z"
+ },
+ {
+  "id": "cards/afterglow",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361925,
+  "at": "2026-09-27T12:32:14.952Z"
+ },
+ {
+  "id": "cards/updraft",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033619,
+  "at": "2026-09-27T12:32:17.310Z"
+ },
+ {
+  "id": "cards/surplus",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:32:19.100Z"
+ },
+ {
+  "id": "cards/graverobber",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:32:19.741Z"
+ },
+ {
+  "id": "cards/slidetackle",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336185,
+  "at": "2026-09-27T12:32:21.784Z"
+ },
+ {
+  "id": "cards/meteor",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361925,
+  "at": "2026-09-27T12:32:23.666Z"
+ },
+ {
+  "id": "cards/momentum",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361875,
+  "at": "2026-09-27T12:32:24.349Z"
+ },
+ {
+  "id": "cards/phasedash",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:32:26.046Z"
+ },
+ {
+  "id": "cards/lanterns",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033619,
+  "at": "2026-09-27T12:32:32.829Z"
+ },
+ {
+  "id": "cards/photovore",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033618,
+  "at": "2026-09-27T12:32:33.758Z"
+ },
+ {
+  "id": "cards/blackout",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:32:35.705Z"
+ },
+ {
+  "id": "cards/refraction",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:32:41.857Z"
+ },
+ {
+  "id": "cards/flare",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336185,
+  "at": "2026-09-27T12:32:44.504Z"
+ },
+ {
+  "id": "cards/umbra",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033618,
+  "at": "2026-09-27T12:32:45.959Z"
+ },
+ {
+  "id": "cards/afterimage",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361875,
+  "at": "2026-09-27T12:32:52.467Z"
+ },
+ {
+  "id": "cards/killchain",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336185,
+  "at": "2026-09-27T12:32:54.052Z"
+ },
+ {
+  "id": "cards/hairtrigger",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:32:55.705Z"
+ },
+ {
+  "id": "cards/nanites",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361875,
+  "at": "2026-09-27T12:33:00.615Z"
+ },
+ {
+  "id": "cards/timebank",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:33:02.590Z"
+ },
+ {
+  "id": "cards/plating",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:33:04.397Z"
+ },
+ {
+  "id": "cards/adrenal",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.033618,
+  "at": "2026-09-27T12:33:04.841Z"
+ },
+ {
+  "id": "cards/repair",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:33:09.091Z"
+ },
+ {
+  "id": "cards/glasscannon",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361875,
+  "at": "2026-09-27T12:33:10.244Z"
+ },
+ {
+  "id": "cards/scavenger",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.0336185,
+  "at": "2026-09-27T12:33:12.554Z"
+ },
+ {
+  "id": "cards/heavyhand",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361825,
+  "at": "2026-09-27T12:34:38.055Z"
+ },
+ {
+  "id": "cards/afterglow",
+  "model": "google/gemini-3.1-flash-lite-image",
+  "cost": 0.03361925,
+  "at": "2026-09-27T12:34:43.311Z"
+ }
+]

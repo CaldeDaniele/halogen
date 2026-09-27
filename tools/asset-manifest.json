@@ -1,0 +1,402 @@
+{
+  "styles": {
+    "tex": "Seamless tileable PBR albedo texture, perfectly flat orthographic top-down scan, uniform diffuse lighting with no shadows, no highlights, no perspective, edges tile seamlessly, photoreal, 1:1. Subject: ",
+    "card": "Square card illustration for a dark sci-fi roguelike. Single iconic subject centered on pure black background, brutalist sci-fi industrial design, dramatic neon rim lighting in cyan and hot magenta, volumetric haze, painterly concept art with crisp details, high contrast, no text, no letters, no frame. Subject: ",
+    "sign": "Glowing neon sign on a pure black background, isolated, no wall visible, front view, flat, vivid saturated neon tubes with soft glow, brutalist dystopian corporate signage, legible bold letters. The sign reads: ",
+    "art": "Cinematic key art, dark brutalist megastructure interior, raw concrete, emissive neon light strips, volumetric god rays through haze, wet reflective floor, dramatic scale, moody, ultra detailed, 16:9 wide composition, no text. Scene: "
+  },
+  "music": [
+    {
+      "id": "title",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Brooding dark synthwave title theme, 90 BPM, D minor, slow evolving analog pads, distant metallic reverb hits, lonely arpeggio, sense of vast empty brutalist megastructure, cinematic, instrumental"
+    },
+    {
+      "id": "s1_ambient",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Dark ambient industrial exploration music, 120 BPM pulse, D minor, cold cyan atmosphere, humming electrical drones, sparse muted kick, glassy synth textures, tension without drums, instrumental, loopable"
+    },
+    {
+      "id": "s1_combat",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Aggressive industrial synthwave combat music, 120 BPM, D minor, distorted driving bassline, punchy gated snares, fast arpeggiated synths, relentless energy, cyberpunk shooter, instrumental, loopable"
+    },
+    {
+      "id": "s1_boss",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Heavy industrial metal synth boss battle, 130 BPM, D minor, massive distorted bass, pounding machine drums, sirens, huge mechanical riffs, epic cyberpunk shooter, instrumental"
+    },
+    {
+      "id": "s2_ambient",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Warm eerie ambient electronica, 110 BPM pulse, F minor, sodium orange mood, buzzing transformer hums, detuned tape pads, slow ticking percussion, abandoned power plant, instrumental, loopable"
+    },
+    {
+      "id": "s2_combat",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Hard electro darksynth combat track, 125 BPM, F minor, grinding sawtooth bass, breakbeat drums, electrical zaps, urgent and fast, cyberpunk shooter, instrumental, loopable"
+    },
+    {
+      "id": "s2_boss",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Intense electro-industrial boss battle, 135 BPM, F minor, crackling electricity, huge synth stabs, heavy drums, rising tension, epic, instrumental"
+    },
+    {
+      "id": "s3_ambient",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Unsettling sacred dark ambient, 100 BPM pulse, B minor, magenta glow mood, distant choir pads, shimmering light textures, deep sub bass, alien cathedral of light, instrumental, loopable"
+    },
+    {
+      "id": "s3_combat",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Furious darksynth with choir, 128 BPM, B minor, distorted bass, driving drums, dramatic choir stabs, frantic arpeggios, cyberpunk shooter climax, instrumental, loopable"
+    },
+    {
+      "id": "s3_boss",
+      "model": "google/lyria-3-pro-preview",
+      "prompt": "Epic final boss battle, 140 BPM, B minor, colossal choir, distorted synth bass, orchestral hits, relentless industrial drums, transcendent light and terror, instrumental"
+    },
+    {
+      "id": "death",
+      "model": "google/lyria-3-clip-preview",
+      "prompt": "Short somber synth sting, falling pitch, reverb tail, failure, dark cyberpunk, instrumental"
+    },
+    {
+      "id": "victory",
+      "model": "google/lyria-3-clip-preview",
+      "prompt": "Triumphant synthwave victory sting, bright rising arpeggio, big reverb, cyberpunk, instrumental"
+    }
+  ],
+  "images": [
+    {
+      "id": "tex/concrete_formwork",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "raw brutalist board-formed concrete wall with subtle wood grain imprint and tie holes, grey"
+    },
+    {
+      "id": "tex/concrete_smooth",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "smooth polished grey concrete floor with fine aggregate speckles and faint cracks"
+    },
+    {
+      "id": "tex/concrete_stained",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "dark wet stained concrete with water streaks, grime and moss-free industrial dirt"
+    },
+    {
+      "id": "tex/metal_brushed",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "brushed dark steel plate with fine scratches and slight wear"
+    },
+    {
+      "id": "tex/metal_diamond",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "industrial diamond tread steel floor plate, worn dark grey"
+    },
+    {
+      "id": "tex/metal_rusted",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "painted dark teal industrial metal panel with chipped paint and rust spots"
+    },
+    {
+      "id": "tex/hazard",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "worn diagonal yellow and black hazard stripes painted on concrete, scuffed"
+    },
+    {
+      "id": "tex/floor_tiles",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "large square dark rubberized industrial floor tiles with thin seams, grid of 4 by 4"
+    },
+    {
+      "id": "tex/ceiling_panels",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "dark acoustic ceiling panels with perforations in a grid, grey metal"
+    },
+    {
+      "id": "tex/armor_ceramic",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "off-white ceramic android armor plating with thin panel seam lines and tiny printed serial markings, scuffed"
+    },
+    {
+      "id": "tex/pipes_wall",
+      "style": "tex",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "industrial wall of vertical dark metal conduits and cables, frontal flat"
+    },
+    {
+      "id": "signs/stack",
+      "style": "sign",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "THE STACK in cyan neon capital letters"
+    },
+    {
+      "id": "signs/obey",
+      "style": "sign",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "LIGHT IS LABOR in hot magenta neon capital letters"
+    },
+    {
+      "id": "signs/sector1",
+      "style": "sign",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "SECTOR 01 FOUNDRY in cold cyan neon letters with an arrow"
+    },
+    {
+      "id": "signs/sector2",
+      "style": "sign",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "SECTOR 02 GRID in sodium orange neon letters with a lightning bolt"
+    },
+    {
+      "id": "signs/sector3",
+      "style": "sign",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "SECTOR 03 FILAMENT in magenta neon letters with a halo symbol"
+    },
+    {
+      "id": "signs/exit",
+      "style": "sign",
+      "model": "google/gemini-3.1-flash-lite-image",
+      "prompt": "EXIT in red neon letters with a running figure pictogram"
+    },
+    {
+      "id": "art/title",
+      "style": "art",
+      "model": "google/gemini-3-pro-image",
+      "prompt": "a lone armored salvage android silhouette standing at the edge of a colossal brutalist shaft, hundreds of floors of concrete balconies, cyan and magenta neon strips receding into fog, a single brilliant white light far below",
+      "aspect": "16:9"
+    },
+    {
+      "id": "art/sector1",
+      "style": "art",
+      "model": "google/gemini-3-pro-image",
+      "prompt": "the Foundry: cold cyan lit concrete halls with hanging chains, molten slag glow far away, rows of deactivated androids on racks",
+      "aspect": "16:9"
+    },
+    {
+      "id": "art/sector2",
+      "style": "art",
+      "model": "google/gemini-3-pro-image",
+      "prompt": "the Grid: a vast power station inside the megastructure, sodium orange lamps, towering transformers arcing with electricity, cables like vines",
+      "aspect": "16:9"
+    },
+    {
+      "id": "art/sector3",
+      "style": "art",
+      "model": "google/gemini-3-pro-image",
+      "prompt": "the Filament: an alien cathedral of light grown inside brutalist concrete, magenta and white filaments of light hanging like tendrils, reverent and terrifying",
+      "aspect": "16:9"
+    },
+    {
+      "id": "art/boss_foreman",
+      "style": "card",
+      "model": "google/gemini-3-pro-image",
+      "prompt": "THE FOREMAN, a hulking five meter tall industrial android with a hydraulic press arm and a glowing cyan core in its chest, scratched yellow hazard armor plates, menacing low angle portrait"
+    },
+    {
+      "id": "art/boss_switchboard",
+      "style": "card",
+      "model": "google/gemini-3-pro-image",
+      "prompt": "THE SWITCHBOARD, a floating spherical android intelligence made of switchboard panels and cables, sodium orange light bulbs as eyes, electricity arcing, portrait"
+    },
+    {
+      "id": "art/boss_filament",
+      "style": "card",
+      "model": "google/gemini-3-pro-image",
+      "prompt": "THE FILAMENT, a radiant humanoid core suspended in the air with dozens of magenta and white light tendrils flowing outward, halo, divine and horrifying, portrait"
+    }
+  ],
+  "cards": [
+    [
+      "w_arc",
+      "a sleek compact sci-fi energy pistol with a glowing blue arc coil"
+    ],
+    [
+      "w_scatter",
+      "a brutal chunky sci-fi pump shotgun with orange glowing heat vents"
+    ],
+    [
+      "w_rail",
+      "a long sci-fi railgun lance with magnetic rails crackling white energy"
+    ],
+    [
+      "w_ion",
+      "a heavy sci-fi grenade launcher with a drum of glowing violet ion grenades"
+    ],
+    [
+      "ricochet",
+      "a glowing bullet bouncing off a concrete wall leaving a bent cyan trail"
+    ],
+    [
+      "chain",
+      "a forked bolt of cyan lightning jumping between three metal spheres"
+    ],
+    [
+      "volatile",
+      "an android torso exploding into orange fire and shrapnel"
+    ],
+    [
+      "overpressure",
+      "a cracked shell casing venting bright plasma"
+    ],
+    [
+      "quickcycle",
+      "a spinning weapon cylinder with motion blur and sparks"
+    ],
+    [
+      "deepmag",
+      "a long curved ammunition magazine glowing with rows of cells"
+    ],
+    [
+      "headhunter",
+      "a cracked android skull with a glowing crosshair reticle"
+    ],
+    [
+      "tungsten",
+      "a dense tungsten bullet piercing through a thick steel plate"
+    ],
+    [
+      "thermite",
+      "a burning white-hot thermite spark eating through metal"
+    ],
+    [
+      "overcharge",
+      "an overloaded glowing capacitor with arcs of energy"
+    ],
+    [
+      "tether",
+      "a mechanical glove with three glowing tethers holding floating debris"
+    ],
+    [
+      "singularity",
+      "a small black sphere pulling rubble into a swirling vortex"
+    ],
+    [
+      "heavyhand",
+      "a massive armored mechanical fist with glowing knuckles"
+    ],
+    [
+      "siphon",
+      "a glowing red stream of energy flowing from an android into a hand"
+    ],
+    [
+      "lumenwell",
+      "a glass capsule overflowing with liquid white light"
+    ],
+    [
+      "shrapnel",
+      "a concrete block shattering into hundreds of glowing fragments"
+    ],
+    [
+      "puppeteer",
+      "an android dangling from glowing marionette strings"
+    ],
+    [
+      "graverobber",
+      "a severed robotic arm glowing with cyan light"
+    ],
+    [
+      "afterglow",
+      "a streak of burning magenta light left behind by a dashing figure"
+    ],
+    [
+      "updraft",
+      "a figure leaping upward on a column of rising cyan air"
+    ],
+    [
+      "surplus",
+      "three glowing battery coils stacked in a harness"
+    ],
+    [
+      "slidetackle",
+      "a boot sliding on wet concrete throwing up sparks"
+    ],
+    [
+      "meteor",
+      "a figure slamming down onto concrete creating a glowing shockwave crater"
+    ],
+    [
+      "momentum",
+      "sleek armor plating with speed lines of light across it"
+    ],
+    [
+      "phasedash",
+      "a translucent afterimage passing through a robot"
+    ],
+    [
+      "lanterns",
+      "a limp android body glowing from within like a paper lantern"
+    ],
+    [
+      "photovore",
+      "a mechanical heart absorbing beams of light"
+    ],
+    [
+      "blackout",
+      "a shattered neon tube raining sparks in darkness"
+    ],
+    [
+      "refraction",
+      "a prism splitting a laser beam into three"
+    ],
+    [
+      "flare",
+      "a burning red flare stuck in a concrete wall"
+    ],
+    [
+      "umbra",
+      "a glowing violet eye seeing through darkness"
+    ],
+    [
+      "afterimage",
+      "a frozen explosion suspended in time with a clock hologram"
+    ],
+    [
+      "killchain",
+      "a chain of glowing links made of hourglasses"
+    ],
+    [
+      "hairtrigger",
+      "a finger on a trigger with electric sparks"
+    ],
+    [
+      "timebank",
+      "a vault door with a glowing clock face"
+    ],
+    [
+      "plating",
+      "a reinforced chest armor plate with glowing seams"
+    ],
+    [
+      "nanites",
+      "a swarm of glowing green nanite particles repairing metal"
+    ],
+    [
+      "adrenal",
+      "a glowing hexagonal energy shield crackling"
+    ],
+    [
+      "scavenger",
+      "a mechanical claw grabbing glowing ammo cells from scrap"
+    ],
+    [
+      "glasscannon",
+      "a cannon made of fragile glass glowing with enormous energy"
+    ],
+    [
+      "repair",
+      "a glowing medical cross made of neon tubes"
+    ]
+  ]
+}
