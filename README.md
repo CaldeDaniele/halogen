@@ -35,7 +35,7 @@ Desktop Chrome / Edge / Firefox, keyboard + mouse. `npm run build` produces a st
 | `Esc` | pause (route map, settings) |
 | `F1` | dev overlay (`F2` physics, `F3` AI, `F4` light clusters, `[` `]` timescale) |
 
-URL flags: `?seed=123` shares a run · `?bench` runs the worst-case perf harness.
+URL flags: `?seed=123` shares a run · `?bench` runs the worst-case perf harness · `?noinst` disables instancing (perf A/B).
 
 ## Design
 
@@ -153,7 +153,12 @@ breaks a run.
 | Scene | Result |
 |---|---|
 | Typical combat, Ultra, 1600×900 (headless Edge, GPU) | ~127 FPS, 3.4 ms/frame |
-| **Worst case** `?bench`: 40 ragdolls, 200 debris, 128 lights, High, 1080p | p50 16.4 ms · p95 20.8 ms (incl. forced GPU sync) |
+| **Worst case** `?bench`: 40 ragdolls, 200 debris, 128 lights, High, 1080p | p50 16.4 ms · p95 20.8 ms (incl. forced GPU sync, round 1) |
+| Same scene after instancing android parts + debris | draw calls 1,133 → 194 · render submission 6.0 → 2.4 ms CPU |
+
+Android parts and debris are drawn through a [`PartInstancer`](src/render/instancer.ts): one `InstancedMesh`
+per (geometry, material), fed with segment matrix × cached local matrix each frame, and fracture chunks of
+any size share a unit box scaled per instance. `?noinst` turns it off for A/B comparisons.
 
 Quality tiers are Low / Medium / High / Ultra. A governor steps down a tier automatically if frames stay
 above 21 ms for 4 s.
@@ -161,9 +166,9 @@ above 21 ms for 4 s.
 ## Tests
 
 ```bash
-npm test             # 146 unit tests (vitest): rng, loop, time, budget, events, input, clustering,
+npm test             # 152 unit tests (vitest): rng, loop, time, budget, events, input, clustering,
                      #   generator reachability, run map, cards/synergies/unlocks, fracture, defs, springs,
-                     #   director budgets, damage-number merging, throw aim assist, hurtboxes, CVD palettes
+                     #   director budgets, damage-number merging, throw aim assist, hurtboxes, CVD palettes, instancing
 npm run test:e2e     # Playwright (system Edge): boots a seed, runs a scripted bot for 10 s of combat,
                      #   clears the room, asserts zero console errors; settings persistence; kinetic
                      #   throw assist; damage numbers/HP bars; Skitter hurtbox; colorblind palette

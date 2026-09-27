@@ -23,8 +23,8 @@ prioritized backlog. Read it fully before changing code.
 FPS cap), dev overlay (F1–F4), `?seed=` and `?bench`.
 
 **Quality gates (all green at handoff):**
-- `npm test` → 146 unit tests (vitest)
-- `npm run test:e2e` → 10 Playwright tests (system Edge channel, no browser download)
+- `npm test` → 152 unit tests (vitest)
+- `npm run test:e2e` → 12 Playwright tests (system Edge channel, no browser download)
 - `npx tsc --noEmit` clean, `npm run build` OK
 
 **Measured performance:** typical combat Ultra 1600×900 ≈ 127 fps (headless Edge, GPU); worst case
@@ -116,6 +116,8 @@ In the browser console / Playwright `page.evaluate`, the game is `window.__halog
 - `g.advance(seconds, { keys: ['KeyW'], fire: true, yaw, pitch })` — steps the sim at 120 Hz with the
   camera synced every step, then renders one frame. Works even when the tab is hidden/throttled.
 - `g.debugExplode(pos)`, `g.bench()`, `g.frameCount`, `g.dev` (overlay state).
+- Android parts and debris are instanced (`g.instancer`); their `THREE.Mesh` objects are not in the scene.
+  To change how an android looks, edit `Android.visual()` (it still builds meshes; `instanceParts` converts them).
 - Note: kills fill Focus → bullet-time slows sim time; loop `advance` until a condition, don't assume
   fixed durations (see e2e `softlock` test).
 
@@ -163,7 +165,7 @@ Legend: **P1** do first · **P2** next · **P3** nice to have. Each item lists w
 
 | ID | Pri | Item | Where | Done when |
 |---|---|---|---|---|
-| C1 | P1 | **CPU draw-call cost** in heavy scenes (≈1,300 meshes with 40 ragdolls) | `android.ts` visuals, `props.ts` debris, `particles.ts` | instanced/merged meshes for android parts + debris; `?bench` 1080p p50 ≤ 12 ms (from 16.4) |
+| C1 | P1 | ~~CPU draw-call cost~~ **done (round 2)**: `PartInstancer`, `?bench` draw calls 1,133 → 194, render CPU 6.0 → 2.4 ms. The ≤ 12 ms p50 target could not be verified: the owner's GPU was shared during round 2 and `?bench` is now GPU-bound (next lever: A2/post stack cost at 1080p) | `android.ts` visuals, `props.ts` debris, `particles.ts` | instanced/merged meshes for android parts + debris; `?bench` 1080p p50 ≤ 12 ms (from 16.4) |
 | C2 | P2 | GPU resources not disposed on room change: door-label `CanvasTexture`/`SpriteMaterial`, boss `LineStrike`/`Shockwave` materials+geometries | `game.ts` `labelDoors`/`clearRoom`, `bosses.ts` | a test/bench that cycles 20 rooms shows flat `renderer.info.memory` |
 | C3 | P2 | `contactCd` map never cleared; fixed pin bodies outlive evicted corpses until room clear | `game.ts` (`registerContacts`, `pinsUpdate`) | map pruned by time; pins removed with their corpse (hook in `corpses` eviction) |
 | C4 | P3 | Shared module geometries (`barrelGeo`, `bandGeo`, `tubeGeo`, `housingGeo`) disposed and re-uploaded every room by `Room.dispose` traversal | `builder.ts` `dispose`, `props.ts`, `fixtures.ts` | shared geometries excluded from disposal |
