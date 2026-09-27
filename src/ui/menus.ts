@@ -53,7 +53,7 @@ export class Menus {
     this.el.className = 'menu title interactive';
     const seed = new URLSearchParams(location.search).get('seed');
     this.el.innerHTML = `
-      <div class="t-art"></div>
+      <div class="t-art" style="background-image:url(assets/art/title.webp)"></div>
       <div class="t-left">
         <div class="t-logo">HALOGEN</div>
         <div class="t-sub">A PHYSICS-DRIVEN ROGUELIKE SHOOTER · BUILT FOR THE BROWSER</div>
