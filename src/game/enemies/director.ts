@@ -20,7 +20,7 @@ export class Director {
 
   constructor(private rng: Rng, readonly sector: number, readonly roomDepth: number, readonly type: RoomType) {
     if (type === 'rest' || type === 'boss') return;
-    const budget = Math.round((8 + roomDepth * 2.2 + sector * 7) * (type === 'elite' ? 1.5 : type === 'gauntlet' ? 0.9 : 1));
+    const budget = Math.round((12 + roomDepth * 2.5 + sector * 8) * (type === 'elite' ? 1.5 : type === 'gauntlet' ? 0.9 : 1));
     const nWaves = type === 'gauntlet' ? 2 : budget > 20 ? 4 : 3;
     const allowed: EnemyType[] = ['grunt', 'skitter'];
     if (sector > 0 || roomDepth >= 2) allowed.push('charger');

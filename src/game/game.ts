@@ -144,6 +144,7 @@ export class Game {
     g.wireEvents();
     g.registerContacts();
     g.input.onLockChange = locked => { if (!locked && g.mode === 'play') g.pause(true); };
+    canvas.addEventListener('click', () => { if (g.mode === 'play' && !g.input.locked) g.input.requestLock(); });
     progress(0.8, 'environment');
     g.applySector(0);
     g.music.preload(['title', 's1_ambient', 's1_combat']);
@@ -776,6 +777,7 @@ export class Game {
         bulletTime: this.time.isBulletTime, inLight: this.inLight, holding: this.kinetic.holding,
       }, realDt);
     }
+    this.hud.setPrompt(this.mode === 'play' && !this.input.locked && !(window as any).__noLockPrompt ? 'CLICK TO ENGAGE' : null);
     this.renderer.wet.wetness = 1;
     this.renderer.render(realDt, simDt);
     this.dev.update(realDt);
