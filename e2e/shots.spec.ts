@@ -31,7 +31,7 @@ test('capture', async ({ page }) => {
     for (const e of g.enemies) if (e.alive && b) { e.body.position.set(b.position.x + (Math.random()-0.5)*3, 0, b.position.z + (Math.random()-0.5)*3); }
     g.advance(0.3); if (b) { const bp = b.position; g.player.teleport(new bp.constructor(bp.x + 6, 0, bp.z + 6)); g.advance(0.1); aim(bp.clone().setY(1.2)); b.destroy(); g.advance(0.2); }`);
   await page.waitForTimeout(300);
-  await page.screenshot({ path: 'docs/shots/explosion.jpg', quality: 85, type: 'jpeg' });
+  // (explosion framing is layout-dependent; not used in the README)
 
   for (const [sector, name] of [[1, 'switchboard'], [2, 'filament']] as const) {
     await stage(page, `g.run.hp = 999; g.run.sector = ${sector}; g.enterNode(g.maps[${sector}].nodes.find(n => n.type === 'boss')); g.advance(3.5);

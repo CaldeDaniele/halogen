@@ -9,7 +9,8 @@ concrete, and fight over the light itself.
 | | |
 |---|---|
 | ![The Switchboard](docs/shots/switchboard.jpg) | ![The Filament](docs/shots/filament.jpg) |
-| ![Explosion](docs/shots/explosion.jpg) | ![Upgrade cards](docs/shots/cards.jpg) |
+| ![The Foreman](docs/shots/foreman.jpg) | ![Upgrade cards](docs/shots/cards.jpg) |
+| ![Dev overlay: physics wireframes + AI utility scores](docs/shots/devoverlay.jpg) | ![Title](docs/shots/title.jpg) |
 
 ## Play
 
