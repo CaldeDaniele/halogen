@@ -1,0 +1,29 @@
+:root {
+  --cyan: #19f0ff;
+  --magenta: #ff2bd6;
+  --amber: #ffb02e;
+  --red: #ff3b3b;
+  --ink: #e8f4f8;
+  --dim: #7d8b93;
+  --bg: #040507;
+  --panel: rgba(6, 10, 14, 0.78);
+  --line: rgba(25, 240, 255, 0.35);
+  --font: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; color: var(--ink); font-family: var(--font); }
+canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100vh; }
+#ui { position: fixed; inset: 0; pointer-events: none; user-select: none; }
+#ui .interactive, #ui button, #ui input, #ui select { pointer-events: auto; }
+
+#boot { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  background: radial-gradient(ellipse at 50% 60%, #0b1418 0%, #030405 70%); z-index: 50; transition: opacity .7s ease; }
+#boot.gone { opacity: 0; pointer-events: none; }
+.boot-title { font-weight: 700; font-size: clamp(48px, 9vw, 120px); letter-spacing: .32em; padding-left: .32em; color: #dffcff;
+  text-shadow: 0 0 12px var(--cyan), 0 0 42px rgba(25, 240, 255, .55), 0 0 90px rgba(25, 240, 255, .25); animation: flick 3.2s infinite; }
+.boot-bar { width: min(420px, 70vw); height: 2px; background: rgba(255, 255, 255, .08); }
+#boot-fill { height: 100%; width: 0; background: var(--cyan); box-shadow: 0 0 12px var(--cyan); transition: width .25s; }
+#boot-msg { font-family: var(--mono); font-size: 12px; letter-spacing: .2em; color: var(--dim); text-transform: uppercase; }
+.boot-err { max-width: 520px; text-align: center; font-family: var(--mono); color: var(--amber); line-height: 1.6; padding: 0 16px; }
+@keyframes flick { 0%, 100% { opacity: 1 } 92% { opacity: 1 } 93% { opacity: .35 } 94% { opacity: 1 } 96% { opacity: .6 } 97% { opacity: 1 } }

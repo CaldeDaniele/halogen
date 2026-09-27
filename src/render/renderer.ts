@@ -26,7 +26,7 @@ export class Renderer {
   readonly camera: THREE.PerspectiveCamera;
   readonly lights = new LightManager();
   composer!: EffectComposer;
-  private ao?: N8AOPostPass;
+  private ao?: any;
   volumetric!: VolumetricPass;
   wet!: WetFloorPass;
   private bloom!: BloomEffect;
