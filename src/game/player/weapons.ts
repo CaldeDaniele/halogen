@@ -252,9 +252,16 @@ export class WeaponSystem {
     let bounces = ricochet;
     let remaining = 120;
     for (let iter = 0; iter < 12 && remaining > 0; iter++) {
-      const hit = ctx.phys.world.castRayAndGetNormal(new RAPIER.Ray(o, d), remaining, true, undefined, SHOT_FILTER, undefined, undefined,
+      let hit = ctx.phys.world.castRayAndGetNormal(new RAPIER.Ray(o, d), remaining, true, undefined, SHOT_FILTER, undefined, undefined,
         (c: any) => c.handle !== ctx.player.collider.handle && !hitSet.has(c.handle) && !hitEnemies.has(ctx.phys.ownerOf(c.handle)?.android));
       if (!hit) { this.tracer(from, o.clone().addScaledVector(d, remaining), def, def.kind === 'rail'); return struck; }
+      if (hit.collider.isSensor()) {
+        // hurtbox: prefer a real segment of the same android further along the ray (keeps headshots and limb hits)
+        const who = ctx.phys.ownerOf(hit.collider.handle)?.android;
+        const seg = ctx.phys.world.castRayAndGetNormal(new RAPIER.Ray(o, d), Math.min(remaining, hit.timeOfImpact + 1.2), true,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, SHOT_FILTER, undefined, undefined, (c: any) => ctx.phys.ownerOf(c.handle)?.android === who);
+        if (seg) hit = seg;
+      }
       const p = o.clone().addScaledVector(d, hit.timeOfImpact);
       const n = new THREE.Vector3(hit.normal.x, hit.normal.y, hit.normal.z);
       const owner = ctx.phys.ownerOf(hit.collider.handle) as Owner | undefined;

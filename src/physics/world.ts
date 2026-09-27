@@ -93,11 +93,19 @@ export class PhysicsWorld {
     return !!b && this.world.bodies.contains(b.handle) && this.world.getRigidBody(b.handle) === b;
   }
 
+  /**
+   * False once a collider has been removed. Rapier's `getCollider(handle)` matches the slot index
+   * only, so after a removal the slot can hold a *different* collider; compare identity instead.
+   */
+  colliderAlive(c: RAPIER.Collider | null | undefined) {
+    return !!c && this.world.getCollider(c.handle) === c;
+  }
+
   /** Ray cast returning hit point, normal and collider. */
-  ray(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, maxToi: number, filter: number, exclude?: RAPIER.Collider | RAPIER.RigidBody) {
+  ray(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, maxToi: number, filter: number, exclude?: RAPIER.Collider | RAPIER.RigidBody, flags?: RAPIER.QueryFilterFlags) {
     const ray = new RAPIER.Ray({ x: ox, y: oy, z: oz }, { x: dx, y: dy, z: dz });
     const isBody = exclude && 'numColliders' in exclude;
-    const hit = this.world.castRayAndGetNormal(ray, maxToi, true, undefined, filter,
+    const hit = this.world.castRayAndGetNormal(ray, maxToi, true, flags, filter,
       isBody ? undefined : (exclude as RAPIER.Collider | undefined), isBody ? (exclude as RAPIER.RigidBody) : undefined);
     if (!hit) return null;
     return {

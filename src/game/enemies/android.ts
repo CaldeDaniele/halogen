@@ -264,7 +264,7 @@ export class Android {
     this.state = 'dead';
     this.deadT = 0;
     this.killedByKinetic = h.source === 'kinetic';
-    this.body.removeHurtbox();
+    this.body.setHurtboxEnabled(false);
     const imp = _v.copy(h.dir).multiplyScalar(h.impulse * 1.6 + 4).add(new THREE.Vector3(0, h.impulse * 0.4 + 1.5, 0));
     if (wasAlive || this.body.mode !== 'ragdoll') this.body.goRagdoll(imp, h.point, seg);
     else seg?.body.applyImpulseAtPoint(imp, h.point, true);

@@ -34,6 +34,19 @@ describe('physics queries', () => {
     phys.removeBody(b);
   });
 
+  it('colliderAlive rejects a removed collider even after Rapier reuses its slot', () => {
+    const b = dynBox(12);
+    const a = phys.world.createCollider(RAPIER.ColliderDesc.ball(0.2), b);
+    expect(phys.colliderAlive(a)).toBe(true);
+    phys.world.removeCollider(a, false);
+    const reuse = phys.world.createCollider(RAPIER.ColliderDesc.ball(0.2), b);
+    // documents the trap: the index-only lookup finds the new collider in the old slot
+    if (phys.world.getCollider(a.handle)) expect(phys.world.getCollider(a.handle)).toBe(reuse);
+    expect(phys.colliderAlive(a)).toBe(false);
+    expect(phys.colliderAlive(reuse)).toBe(true);
+    phys.removeBody(b);
+  });
+
   it('bodyAlive reports removed bodies so stale references can be pruned', () => {
     const b = dynBox(5);
     expect(phys.bodyAlive(b)).toBe(true);
@@ -62,6 +75,13 @@ describe('android hurtbox (small fast enemies)', () => {
     expect(hit!.collider.isSensor()).toBe(true);
     expect(phys.ownerOf(hit!.collider.handle)?.seg).toBe(body.root);
     expect(body.root.body.mass()).toBeCloseTo(mass, 5);
+    // on death the hurtbox is disabled, not removed: no collider removal while a blast is iterating
+    body.setHurtboxEnabled(false);
+    phys.world.step();
+    expect(shoot()).toBeNull();
+    body.setHurtboxEnabled(true);
+    phys.world.step();
+    expect(shoot()).not.toBeNull();
     body.removeHurtbox();
     phys.world.step();
     expect(shoot()).toBeNull();

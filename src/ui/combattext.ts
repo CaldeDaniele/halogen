@@ -35,7 +35,8 @@ export class CombatText {
 
   private key(e: object) { let k = this.keys.get(e); if (!k) { k = this.nextKey++; this.keys.set(e, k); } return k; }
 
-  hit(enemy: TextTarget, dmg: number, head: boolean, point: THREE.Vector3, now: number) {
+  /** `bar`: show a floating HP bar (regular androids only; bosses have the HUD bar). */
+  hit(enemy: TextTarget, dmg: number, head: boolean, point: THREE.Vector3, now: number, bar = true) {
     if (!this.enabled || dmg <= 0) return;
     const e = this.tally.add(this.key(enemy), dmg, now, head);
     let n = this.nums.get(e);
@@ -54,7 +55,7 @@ export class CombatText {
       // the outer element is positioned by transform every frame; the pop animates the inner span
       n.txt.classList.remove('bump'); void n.txt.offsetWidth; n.txt.classList.add('bump');
     }
-    if (!enemy.isBoss) {
+    if (bar && !enemy.isBoss) {
       let b = this.bars.get(enemy);
       if (!b) {
         const el = document.createElement('div'); el.className = 'ehp';

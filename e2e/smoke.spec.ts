@@ -296,3 +296,60 @@ test('colorblind telegraph palette persists and remaps enemy tells and HUD color
   expect(r.tell).toBe(0xffd400);
   expect(r.hurt).toBe('#ff8c00');
 });
+
+test('the skitter hurtbox never swallows a direct hit: headshots still register', async ({ page }) => {
+  await page.goto('/?seed=5');
+  await page.waitForFunction(() => (window as any).__halogen, null, { timeout: 60_000 });
+  const r = await page.evaluate(() => {
+    const g = (window as any).__halogen;
+    (window as any).__noLockPrompt = true;
+    g.renderer.setQuality('low'); g.menus.hide(); g.newRun(5); g.director = null; g.advance(0.2);
+    const V = g.player.pos.constructor;
+    for (const e of [...g.enemies]) g.disposeAndroid(e);
+    g.enemies = [];
+    g.player.teleport(new V(0, 0, 1), 0);
+    const s = g.spawnEnemy('skitter', new V(0, 0, -4), false);
+    s.ai = null;
+    g.advance(0.2);
+    let head = 0, hits = 0;
+    g.events.on('enemyHit', (e: any) => { if (e.enemy === s) { hits++; if (e.hit.headshot) head++; } });
+    const e = g.player.eye, c = s.head;
+    const dx = c.x - e.x, dy = c.y - e.y, dz = c.z - e.z;
+    g.player.yaw = Math.atan2(-dx, -dz); g.player.pitch = Math.atan2(dy, Math.hypot(dx, dz));
+    g.advance(0.05, { fire: true });
+    return { hits, head };
+  });
+  expect(r.hits).toBe(1);
+  expect(r.head).toBe(1);
+});
+
+test('boss damage numbers report damage actually dealt and bosses get no floating HP bar', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  await page.goto('/?seed=5');
+  await page.waitForFunction(() => (window as any).__halogen, null, { timeout: 60_000 });
+  const r = await page.evaluate(() => {
+    const g = (window as any).__halogen;
+    (window as any).__noLockPrompt = true;
+    g.renderer.setQuality('low'); g.menus.hide(); g.newRun(5); g.advance(0.2);
+    const out: any = {};
+    for (const s of [1, 2]) { // Switchboard, Filament: pseudo-boss objects with their own damage rules
+      g.run.sector = s;
+      g.enterNode(g.maps[s].nodes.find((n: any) => n.type === 'boss'));
+      g.advance(0.5);
+      const b = g.boss;
+      if ('overload' in b) b.overload = 5; // Switchboard: open the overload window instead of solving the pylons
+      const V = g.player.pos.constructor;
+      const hp0 = b.hp;
+      b.hit({ point: b.pos.clone(), normal: new V(0, 1, 0), dir: new V(0, 0, -1), damage: 100, impulse: 1, source: 'kinetic', weapon: 'kinetic' });
+      g.advance(0.02);
+      out[s] = { dealt: Math.round(hp0 - b.hp), shown: [...document.querySelectorAll('.dmgnum')].map(n => n.textContent).pop(), bars: document.querySelectorAll('.ehp').length };
+    }
+    return out;
+  });
+  expect(errors).toEqual([]);
+  for (const s of ['1', '2']) {
+    expect(r[s].shown, `sector ${s}`).toBe(String(r[s].dealt));
+    expect(r[s].bars, `sector ${s}`).toBe(0);
+  }
+});

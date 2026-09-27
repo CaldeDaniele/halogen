@@ -382,7 +382,7 @@ export class Game {
         const dealt = hit.dealt ?? hit.damage;
         this.hud.hitmarker(hit.headshot ? 'head' : 'hit');
         this.sfx.play(hit.headshot ? 'headshot' : 'hit', { gain: 0.6 + dealt / 40 });
-        if (hit.weapon !== 'thermite') this.combatText.hit(enemy, dealt, !!hit.headshot, hit.point, performance.now() / 1000);
+        if (hit.weapon !== 'thermite') this.combatText.hit(enemy, dealt, !!hit.headshot, hit.point, performance.now() / 1000, enemy instanceof Android);
       }
       // arc chain
       if (this.run.mods.chain > 0 && hit.source === 'player' && hit.weapon !== 'explosion' && !hit.tags?.has('chain')) {
@@ -1016,9 +1016,11 @@ export class Game {
     this.sfx.play('btIn', { pos: p });
     const tick = () => {
       t += 0.05;
+      const pulled = new Set<number>(); // one pull per body (a Skitter root also carries a hurtbox)
       for (const col of this.phys.overlapBall(p, 7)) {
         const b = col.parent();
-        if (b && b.isDynamic()) {
+        if (b && b.isDynamic() && !pulled.has(b.handle)) {
+          pulled.add(b.handle);
           const bt = b.translation();
           const d = new THREE.Vector3(p.x - bt.x, p.y - bt.y, p.z - bt.z);
           const len = Math.max(0.5, d.length());

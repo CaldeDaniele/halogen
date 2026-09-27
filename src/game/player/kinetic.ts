@@ -215,7 +215,8 @@ export class KineticHand {
     // otherwise throw toward whatever is under the crosshair
     const eye = cam.getWorldPosition(new THREE.Vector3());
     const heldAndroids = new Set(this.held.map(h => h.android));
-    const cands: Android[] = (ctx.game?.enemies ?? []).filter((e: Android) => e.alive && !heldAndroids.has(e) && (e.visibility ?? 1) > 0.5);
+    const los = (e: Android) => { const c = e.center, d = c.clone().sub(eye), L = d.length(); d.divideScalar(L); return !ctx.phys.ray(eye.x, eye.y, eye.z, d.x, d.y, d.z, L - 0.3, groups(0xffff, G.STATIC)); };
+    const cands: Android[] = (ctx.game?.enemies ?? []).filter((e: Android) => e.alive && !heldAndroids.has(e) && (e.visibility ?? 1) > 0.5 && los(e));
     const ti = pickAssistTarget(eye, fwd, cands.map(e => ({ pos: e.center })), ASSIST_CONE, ASSIST_RANGE);
     const assist = ti >= 0 ? cands[ti] : undefined;
     let totalMass = 0;
@@ -226,10 +227,10 @@ export class KineticHand {
       if (assist) {
         const aim = assist.center;
         const flight = aim.distanceTo(new THREE.Vector3(t.x, t.y, t.z)) / speed;
-        aim.addScaledVector(assist.vel, flight);
+        if (assist.state === 'alive') aim.addScaledVector(assist.vel, flight); // vel is stale while ragdolled
         dir = new THREE.Vector3(aim.x - t.x, aim.y - t.y, aim.z - t.z).normalize();
       } else {
-        const aimHit = ctx.phys.ray(eye.x, eye.y, eye.z, fwd.x, fwd.y, fwd.z, 80, groups(0xffff, G.STATIC | G.ENEMY), h.body);
+        const aimHit = ctx.phys.ray(eye.x, eye.y, eye.z, fwd.x, fwd.y, fwd.z, 80, groups(0xffff, G.STATIC | G.ENEMY), h.body, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS);
         dir = aimHit ? new THREE.Vector3(aimHit.x - t.x, aimHit.y - t.y, aimHit.z - t.z).normalize() : fwd.clone();
       }
       const v = dir.multiplyScalar(speed);

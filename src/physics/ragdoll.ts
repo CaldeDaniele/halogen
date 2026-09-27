@@ -116,8 +116,11 @@ export class ArticulatedBody {
     if (!h) return;
     this.hurtbox = undefined;
     this.phys.userData.delete(h.handle);
-    if (this.phys.world.getCollider(h.handle)) this.phys.world.removeCollider(h, false);
+    if (this.phys.colliderAlive(h)) this.phys.world.removeCollider(h, false);
   }
+
+  /** Dead bodies keep the (disabled) hurtbox until the body is removed: no collider removal mid-blast. */
+  setHurtboxEnabled(on: boolean) { if (this.phys.colliderAlive(this.hurtbox)) this.hurtbox!.setEnabled(on); }
 
   /** Compute FK deformation for every segment from local rotations + flinch springs. */
   private fk() {

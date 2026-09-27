@@ -329,6 +329,7 @@ class Switchboard implements Boss {
     }
     const dmg = h.damage * (h.source === 'kinetic' ? 1.5 : 1);
     this.hp -= dmg;
+    h.dealt = dmg;
     this.ctx.hud.hitmarker(h.damage > 60 ? 'head' : 'hit');
     this.ctx.sfx.play('impactMetal', { pos: h.point });
     this.ctx.events.emit('enemyHit', { hit: h, enemy: this });
@@ -550,7 +551,8 @@ class Filament implements Boss {
     if (this.dead || this.deathT >= 0) return;
     const n = this.attachedCount;
     const k = n >= 3 ? 0.15 : n > 0 ? 0.45 : 1;
-    this.hp -= h.damage * k * (h.source === 'kinetic' ? 1.6 : 1);
+    h.dealt = h.damage * k * (h.source === 'kinetic' ? 1.6 : 1);
+    this.hp -= h.dealt;
     this.ctx.hud.hitmarker(k < 0.3 ? 'hit' : 'head');
     this.ctx.particles.sparksAt(h.point, h.normal, 10, 0xffffff, 7, 1, 0.3);
     this.ctx.events.emit('enemyHit', { hit: h, enemy: this });

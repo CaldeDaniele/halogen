@@ -45,7 +45,7 @@ export function explode(ctx: Ctx, pos: THREE.Vector3, radius: number, damage: nu
   const hitOwners = new Set<Owner>();
   // collect first, act after: Rapier forbids body mutation inside the query callback
   for (const col of ctx.phys.overlapBall(pos, radius)) {
-    if (!ctx.phys.world.getCollider(col.handle)) continue; // removed by an earlier hit this blast
+    if (!ctx.phys.colliderAlive(col)) continue; // removed by an earlier hit this blast (slot may be reused)
     const t = col.translation();
     _v.set(t.x - pos.x, t.y - pos.y, t.z - pos.z);
     const d = Math.max(0.3, _v.length());
@@ -63,7 +63,7 @@ export function explode(ctx: Ctx, pos: THREE.Vector3, radius: number, damage: nu
       hitOwners.add(key);
       owner.hit({ point: new THREE.Vector3(t.x, t.y, t.z), normal: dir.clone().negate(), dir, damage: damage * (0.35 + 0.65 * fall), impulse: impulse * fall, source, weapon: 'explosion', collider: col, tags });
     }
-    const body = ctx.phys.world.getCollider(col.handle) ? col.parent() : null;
+    const body = ctx.phys.colliderAlive(col) ? col.parent() : null;
     if (body && ctx.phys.bodyAlive(body) && body.isDynamic() && !hitBodies.has(body.handle)) {
       hitBodies.add(body.handle);
       // mass-proportional up to 60 kg: similar Δv for limbs, crates and barrels — explosions should launch things
