@@ -165,6 +165,14 @@ export class Android {
   }
   get head() { const h = this.body.segs.find(s => s.def.head)!; const t = h.body.translation(); return new THREE.Vector3(t.x, t.y, t.z); }
 
+  private hittable = true;
+  /** Shades in darkness: bullets pass through them. */
+  setHittable(v: boolean) {
+    if (v === this.hittable || this.state !== 'alive') return;
+    this.hittable = v;
+    for (const sg of this.body.segs) sg.collider.setCollisionGroups(v ? groups(G.ENEMY, G.PLAYER | G.PROP | G.DEBRIS | G.RAGDOLL | G.HELD) : groups(G.TRIGGER, G.PROP | G.HELD));
+  }
+
   // ---------- damage ----------
   hit(h: HitInfo, seg: Seg) {
     const ctx = this.ctx;
@@ -299,7 +307,7 @@ export class Android {
     const coreSeg = b.seg('torso') ?? b.root;
     const ct = coreSeg.body.translation();
     this.core.pos.set(ct.x, ct.y, ct.z);
-    const deadK = this.state === 'dead' ? Math.max(0, 1 - this.deadT / 2.2) : 1;
+    const deadK = this.state === 'dead' ? (ctx.run.mods.lanterns ? Math.max(0.75, 1 - this.deadT / 2.2) : Math.max(0, 1 - this.deadT / 2.2)) : 1;
     const flick = this.state === 'dead' && this.deadT < 1.5 ? (Math.random() < 0.15 ? 0.2 : 1) : this.state === 'stagger' ? (Math.random() < 0.3 ? 0.3 : 1) : 1;
     const k = deadK * flick;
     const col = _v.set(this.coreColor.r, this.coreColor.g, this.coreColor.b).lerp(_v2.set(this.flareColor.r, this.flareColor.g, this.flareColor.b), Math.min(1, this.flare));
@@ -311,6 +319,7 @@ export class Android {
   private getUp() {
     if (this.state === 'dead') return;
     this.body.recover();
+    this.hittable = true;
     const r = this.body.root.body.translation();
     // stand up where the pelvis landed; face the player
     const ground = this.ctx.phys.ray(r.x, r.y + 0.5, r.z, 0, -1, 0, 5, groups(0xffff, G.STATIC));

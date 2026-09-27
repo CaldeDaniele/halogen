@@ -28,7 +28,7 @@ function buildViewmodel(ctx: Ctx, id: string): { root: THREE.Group; muzzle: THRE
   const g = new THREE.Group();
   const metal = ctx.mats.get('metal'), armor = ctx.mats.get('armor'), joint = ctx.mats.get('joint');
   const def = WEAPONS[id];
-  const neon = ctx.mats.neon(def.color, 5);
+  const neon = ctx.mats.neon(def.color, 2.2);
   const glow: THREE.Mesh[] = [];
   const box = (w: number, h: number, d: number, x: number, y: number, z: number, m: THREE.Material) => {
     const b = new THREE.Mesh(worldBox(w, h, d, 0.3), m); b.position.set(x, y, z); g.add(b); return b;
@@ -219,8 +219,9 @@ export class WeaponSystem {
     const pierceAll = def.kind === 'rail';
     const tags = new Set<string>();
     if (mods.thermite) tags.add('thermite');
-    for (let p = 0; p < def.pellets; p++) {
-      const dir = this.aimDir(def.spread * (ctx.player.grounded ? 1 : 1.3) + (def.pellets === 1 ? Math.min(0.02, ctx.player.horizSpeed * 0.0006) : 0));
+    const extra = mods.refraction && ctx.game.inLight > 0.3 && def.kind === 'hitscan' ? 2 : 0;
+    for (let p = 0; p < def.pellets + extra; p++) {
+      const dir = this.aimDir((p >= def.pellets ? 0.045 : 0) + def.spread * (ctx.player.grounded ? 1 : 1.3) + (def.pellets === 1 ? Math.min(0.02, ctx.player.horizSpeed * 0.0006) : 0));
       this.trace(eye, dir, muzzle, def, def.dmg * mods.dmgMul * over, pierceAll ? 99 : mods.pierce, mods.ricochet, tags);
     }
     if (mods.flare && this.shotCount % 5 === 0) {

@@ -159,25 +159,25 @@ function placeFixtures(r: RoomLayout, rng: Rng, density: number) {
   const inset = CELL - 0.12;
   along(r.w * CELL, (t, l) => {
     const c = rng.pick(pal), x0 = -hw + t;
-    r.fixtures.push({ kind: 'tube', a: [x0, tubeY, -hh + inset], b: [x0 + l, tubeY, -hh + inset], color: c, intensity: 16, radius: 12, breakable: true, normal: [0, 0, 1] });
+    r.fixtures.push({ kind: 'tube', a: [x0, tubeY, -hh + inset], b: [x0 + l, tubeY, -hh + inset], color: c, intensity: 7, radius: 11, breakable: true, normal: [0, 0, 1] });
   });
   along(r.w * CELL, (t, l) => {
     const c = rng.pick(pal), x0 = -hw + t;
-    r.fixtures.push({ kind: 'tube', a: [x0, tubeY, hh - inset], b: [x0 + l, tubeY, hh - inset], color: c, intensity: 16, radius: 12, breakable: true, normal: [0, 0, -1] });
+    r.fixtures.push({ kind: 'tube', a: [x0, tubeY, hh - inset], b: [x0 + l, tubeY, hh - inset], color: c, intensity: 7, radius: 11, breakable: true, normal: [0, 0, -1] });
   });
   along(r.h * CELL, (t, l) => {
     const c = rng.pick(pal), z0 = -hh + t;
-    r.fixtures.push({ kind: 'tube', a: [-hw + inset, tubeY, z0], b: [-hw + inset, tubeY, z0 + l], color: c, intensity: 16, radius: 12, breakable: true, normal: [1, 0, 0] });
+    r.fixtures.push({ kind: 'tube', a: [-hw + inset, tubeY, z0], b: [-hw + inset, tubeY, z0 + l], color: c, intensity: 7, radius: 11, breakable: true, normal: [1, 0, 0] });
   });
   along(r.h * CELL, (t, l) => {
     const c = rng.pick(pal), z0 = -hh + t;
-    r.fixtures.push({ kind: 'tube', a: [hw - inset, tubeY, z0], b: [hw - inset, tubeY, z0 + l], color: c, intensity: 16, radius: 12, breakable: true, normal: [-1, 0, 0] });
+    r.fixtures.push({ kind: 'tube', a: [hw - inset, tubeY, z0], b: [hw - inset, tubeY, z0 + l], color: c, intensity: 7, radius: 11, breakable: true, normal: [-1, 0, 0] });
   });
   // floor-level strips along walls (low accent light, great on wet floors)
   if (rng.chance(0.7)) {
     const c = pal[3] ?? pal[0];
-    r.fixtures.push({ kind: 'strip', a: [-hw + inset, 0.15, -hh + 3], b: [-hw + inset, 0.15, hh - 3], color: c, intensity: 7, radius: 6, breakable: true, normal: [1, 0, 0] });
-    r.fixtures.push({ kind: 'strip', a: [hw - inset, 0.15, -hh + 3], b: [hw - inset, 0.15, hh - 3], color: c, intensity: 7, radius: 6, breakable: true, normal: [-1, 0, 0] });
+    r.fixtures.push({ kind: 'strip', a: [-hw + inset, 0.15, -hh + 3], b: [-hw + inset, 0.15, hh - 3], color: c, intensity: 3.5, radius: 6, breakable: true, normal: [1, 0, 0] });
+    r.fixtures.push({ kind: 'strip', a: [hw - inset, 0.15, -hh + 3], b: [hw - inset, 0.15, hh - 3], color: c, intensity: 3.5, radius: 6, breakable: true, normal: [-1, 0, 0] });
   }
   // overhead panels
   const nPanels = Math.round((r.w * r.h) / 70 * density);
@@ -186,7 +186,7 @@ function placeFixtures(r: RoomLayout, rng: Rng, density: number) {
     const along = rng.chance(0.5);
     const l = rng.range(2, 4);
     r.fixtures.push({ kind: 'panel', a: [x - (along ? l / 2 : 0), r.height - 0.3, z - (along ? 0 : l / 2)], b: [x + (along ? l / 2 : 0), r.height - 0.3, z + (along ? 0 : l / 2)],
-      color: rng.chance(0.7) ? 0xe6f2ff : rng.pick(pal), intensity: 14, radius: 11, breakable: true, normal: [0, -1, 0] });
+      color: rng.chance(0.7) ? 0xe6f2ff : rng.pick(pal), intensity: 6, radius: 10, breakable: true, normal: [0, -1, 0] });
   }
   // vertical tubes on some pillars
   for (let y = 1; y < r.h - 1; y++) for (let x = 1; x < r.w - 1; x++) {
@@ -195,7 +195,7 @@ function placeFixtures(r: RoomLayout, rng: Rng, density: number) {
     const side = rng.int(0, 3);
     const n: [number, number, number] = [[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]][side] as any;
     const ox = wx + n[0] * 0.86, oz = wz + n[2] * 0.86;
-    r.fixtures.push({ kind: 'pillar', a: [ox, 0.8, oz], b: [ox, Math.min(r.height - 1, 4.2), oz], color: rng.pick(pal), intensity: 12, radius: 8, breakable: true, normal: n });
+    r.fixtures.push({ kind: 'pillar', a: [ox, 0.8, oz], b: [ox, Math.min(r.height - 1, 4.2), oz], color: rng.pick(pal), intensity: 5.5, radius: 8, breakable: true, normal: n });
   }
 }
 
@@ -242,13 +242,16 @@ function pickSpawns(r: RoomLayout, rng: Rng, reach: Set<number>, want: number) {
   return out;
 }
 
+let forcedExits: number | undefined;
+const ex = (rng: Rng, p: number) => forcedExits ?? (rng.chance(p) ? 2 : 1);
+
 function layout(seed: number, type: RoomType, sector: number, attempt: number): RoomLayout {
   const rng = new Rng((seed ^ Rng.hash(type + attempt)) >>> 0);
   let r: RoomLayout;
   switch (type) {
     case 'gauntlet': {
       r = makeRoom(seed, type, sector, rng.int(9, 11), rng.int(24, 30), 8);
-      placeDoors(r, rng, rng.chance(0.4) ? 2 : 1);
+      placeDoors(r, rng, ex(rng, 0.4));
       for (let y = 4; y < r.h - 4; y += rng.int(3, 4)) {
         const x = rng.int(2, r.w - 4), len = rng.int(2, 4);
         for (let k = 0; k < len; k++) set(r, x + k, y, rng.chance(0.7) ? Cell.LOW : Cell.HIGH);
@@ -258,7 +261,7 @@ function layout(seed: number, type: RoomType, sector: number, attempt: number): 
     }
     case 'shaft': {
       r = makeRoom(seed, type, sector, rng.int(15, 18), rng.int(15, 18), 13);
-      placeDoors(r, rng, rng.chance(0.5) ? 2 : 1);
+      placeDoors(r, rng, ex(rng, 0.5));
       const n = rng.int(2, 3);
       for (let i = 0; i < n; i++) addPlatform(r, rng, rng.int(4, r.w - 9), rng.int(3, r.h - 9), rng.int(3, 5), rng.int(3, 5));
       pillars(r, rng, 6, true);
@@ -267,21 +270,21 @@ function layout(seed: number, type: RoomType, sector: number, attempt: number): 
     }
     case 'boss': {
       r = makeRoom(seed, type, sector, 24, 24, 14);
-      placeDoors(r, rng, 1);
+      placeDoors(r, rng, ex(rng, 0));
       for (const [x, y] of [[6, 6], [17, 6], [6, 17], [17, 17]]) for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) set(r, x + dx, y + dy, Cell.PILLAR);
       scatterCover(r, rng, 6);
       break;
     }
     case 'rest': {
-      r = makeRoom(seed, type, sector, 11, 13, 8);
-      placeDoors(r, rng, 1);
+      r = makeRoom(seed, type, sector, 13, 13, 8);
+      placeDoors(r, rng, ex(rng, 0));
       set(r, 3, 4, Cell.PILLAR); set(r, 7, 4, Cell.PILLAR);
       break;
     }
     default: { // arena, dark, elite
       const big = type === 'elite' ? 2 : 0;
       r = makeRoom(seed, type, sector, rng.int(16, 21) + big, rng.int(16, 21) + big, rng.int(9, 11));
-      placeDoors(r, rng, rng.chance(0.55) ? 2 : 1);
+      placeDoors(r, rng, ex(rng, 0.55));
       const style = rng.int(0, 2);
       if (style === 0) pillars(r, rng, rng.int(4, 5), false);
       else if (style === 1) pillars(r, rng, 5, true);
@@ -297,7 +300,12 @@ function layout(seed: number, type: RoomType, sector: number, attempt: number): 
   return r;
 }
 
-export function generateRoom(seed: number, type: RoomType, sector: number): RoomLayout {
+export function generateRoom(seed: number, type: RoomType, sector: number, exits?: number): RoomLayout {
+  forcedExits = exits;
+  try { return gen(seed, type, sector); } finally { forcedExits = undefined; }
+}
+
+function gen(seed: number, type: RoomType, sector: number): RoomLayout {
   for (let attempt = 0; attempt < 30; attempt++) {
     const r = layout(seed, type, sector, attempt);
     const reach = walkableFrom(r, r.entry.x, r.entry.y);
@@ -313,7 +321,7 @@ export function generateRoom(seed: number, type: RoomType, sector: number): Room
   // fallback: open box that is always valid
   const r = makeRoom(seed, 'arena', sector, 16, 16, 9);
   const rng = new Rng(seed);
-  placeDoors(r, rng, 1);
+  placeDoors(r, rng, ex(rng, 0));
   r.spawns = pickSpawns(r, rng, walkableFrom(r, r.entry.x, r.entry.y), 12);
   placeFixtures(r, rng, 1);
   return r;

@@ -84,6 +84,28 @@ export class LightManager {
     return this.add({ pos, color: new THREE.Color(color), intensity, radius, ttl });
   }
 
+  /** Approximate illuminance at p (CPU), used for gameplay: shades, lumen zones, refraction. */
+  sample(p: THREE.Vector3, exclude?: DynLight) {
+    let s = 0;
+    const t = this.tmp;
+    for (const l of this.lights) {
+      if (!l.enabled || l === exclude) continue;
+      let d: number;
+      if (l.type === LightType.Tube) {
+        const ab = this.tmp2.copy(l.pos2).sub(l.pos);
+        const k = THREE.MathUtils.clamp(t.copy(p).sub(l.pos).dot(ab) / Math.max(ab.lengthSq(), 1e-4), 0, 1);
+        d = t.copy(l.pos).addScaledVector(ab, k).distanceTo(p);
+      } else d = l.pos.distanceTo(p);
+      if (d >= l.radius) continue;
+      let x = d / l.radius; x = x * x; x = Math.max(0, 1 - x * x);
+      let a = (x * x) / (d * d + 1);
+      if (l.type === LightType.Spot) { const dir = t.copy(p).sub(l.pos).normalize(); a *= THREE.MathUtils.smoothstep(dir.dot(l.pos2), l.spotCos, l.spotCos + (1 - l.spotCos) * 0.25); }
+      const fade = l.ttl >= 0 && l.fade ? Math.max(0, l.ttl / l.life0) ** 2 : 1;
+      s += a * l.intensity * l.mul * fade;
+    }
+    return s / 10;
+  }
+
   remove(l: DynLight) {
     const i = this.lights.indexOf(l);
     if (i >= 0) this.lights.splice(i, 1);

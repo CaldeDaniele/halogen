@@ -6,7 +6,18 @@ export class Spring {
   x = 0; v = 0;
   constructor(public k = 180, public c = 18) {}
   kick(v: number) { this.v += v; }
-  update(dt: number) { const a = -this.k * this.x - this.c * this.v; this.v += a * dt; this.x += this.v * dt; return this.x; }
+  /** Semi-implicit Euler, sub-stepped so long frames (tab throttling) can't blow it up. */
+  update(dt: number) {
+    let left = Math.min(dt, 0.25);
+    while (left > 1e-6) {
+      const h = Math.min(left, 1 / 240);
+      this.v += (-this.k * this.x - this.c * this.v) * h;
+      this.x += this.v * h;
+      left -= h;
+    }
+    if (!Number.isFinite(this.x)) { this.x = 0; this.v = 0; }
+    return this.x;
+  }
 }
 
 function noise1(t: number) { return Math.sin(t * 1.0) * 0.5 + Math.sin(t * 2.3 + 1.3) * 0.3 + Math.sin(t * 5.1 + 2.1) * 0.2; }

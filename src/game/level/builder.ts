@@ -163,14 +163,14 @@ export class Room {
     // key shadowed spots (1-2)
     const nKeys = r.type === 'dark' ? 1 : 2;
     for (let i = 0; i < nKeys; i++) {
-      const sp = new THREE.SpotLight(0xd8ecff, r.type === 'dark' ? 40 : 70, hgt * 3, 0.55, 0.7, 1.3);
+      const sp = new THREE.SpotLight(0xd8ecff, r.type === 'dark' ? 18 : 34, hgt * 3, 0.55, 0.7, 1.3);
       const [kx, kz] = [(i === 0 ? -1 : 1) * W * 0.18, (i === 0 ? -1 : 1) * H * 0.12];
       sp.position.set(kx, hgt - 0.4, kz); sp.target.position.set(kx * 0.5, 0, kz * 0.5);
       sp.castShadow = ctx.renderer.cfg.shadows; sp.shadow.mapSize.set(1024, 1024); sp.shadow.bias = -0.0004; sp.shadow.normalBias = 0.03; sp.shadow.camera.near = 0.5;
       this.group.add(sp, sp.target);
       this.keyLights.push(sp);
       // matching volumetric cone + visible fixture
-      this.extraLights.push(ctx.lights.add({ type: LightType.Spot, pos: sp.position.clone(), pos2: sp.target.position.clone().sub(sp.position).normalize(), spotCos: Math.cos(0.5), color: new THREE.Color(0xd8ecff), intensity: r.type === 'dark' ? 16 : 26, radius: hgt * 2 }));
+      this.extraLights.push(ctx.lights.add({ type: LightType.Spot, pos: sp.position.clone(), pos2: sp.target.position.clone().sub(sp.position).normalize(), spotCos: Math.cos(0.5), color: new THREE.Color(0xd8ecff), intensity: r.type === 'dark' ? 6 : 11, radius: hgt * 2 }));
       const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 0.25, 16), ctx.mats.neon(0xeaf6ff, 6));
       lamp.position.copy(sp.position).add(new THREE.Vector3(0, 0.15, 0)); this.group.add(lamp);
     }
@@ -185,7 +185,7 @@ export class Room {
       else { pl.position.set(-W / 2 + CELL + 0.05, 3.2, (rng(2) - 0.5) * H * 0.5); pl.rotation.y = Math.PI / 2; }
       this.group.add(pl);
       const c = i === 0 ? r.palette[0] : 0xff2bd6;
-      this.extraLights.push(ctx.lights.add({ pos: pl.position.clone().add(new THREE.Vector3(i === 0 ? 0 : 0.8, 0, i === 0 ? 0.8 : 0)), color: new THREE.Color(c), intensity: 5, radius: 6 }));
+      this.extraLights.push(ctx.lights.add({ pos: pl.position.clone().add(new THREE.Vector3(i === 0 ? 0 : 0.8, 0, i === 0 ? 0.8 : 0)), color: new THREE.Color(c), intensity: 2.5, radius: 6 }));
     });
 
     this.nav = new NavGrid(r);

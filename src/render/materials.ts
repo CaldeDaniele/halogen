@@ -35,7 +35,7 @@ export function tex(path: string, kind: 'albedo' | 'normal' | 'rough' = 'albedo'
   return t;
 }
 
-export interface SurfaceOpts { tint?: THREE.ColorRepresentation; roughness?: number; metalness?: number; normalScale?: number; envInt?: number }
+export interface SurfaceOpts { tint?: THREE.ColorRepresentation; roughness?: number; metalness?: number; normalScale?: number; envInt?: number; dark?: number }
 
 export class Materials {
   readonly surfaces = new Map<string, THREE.MeshStandardMaterial>();
@@ -47,14 +47,14 @@ export class Materials {
     S('wall', 'concrete_formwork', { roughness: 0.95 });
     S('floor', 'concrete_smooth', { roughness: 0.75 });
     S('stained', 'concrete_stained', { roughness: 0.8, tint: 0xbfc4c8 });
-    S('metal', 'metal_brushed', { roughness: 0.55, metalness: 0.85 });
-    S('diamond', 'metal_diamond', { roughness: 0.5, metalness: 0.8 });
+    S('metal', 'metal_brushed', { roughness: 0.55, metalness: 0.85, dark: 1 });
+    S('diamond', 'metal_diamond', { roughness: 0.5, metalness: 0.8, dark: 0.8 });
     S('panel', 'metal_rusted', { roughness: 0.7, metalness: 0.5 });
     S('hazard', 'hazard', { roughness: 0.8 });
     S('tiles', 'floor_tiles', { roughness: 0.6 });
     S('ceiling', 'ceiling_panels', { roughness: 0.8, metalness: 0.3 });
     S('pipes', 'pipes_wall', { roughness: 0.6, metalness: 0.7 });
-    S('armor', 'armor_ceramic', { roughness: 0.42, metalness: 0.05, normalScale: 0.6 });
+    S('armor', 'armor_ceramic', { roughness: 0.42, metalness: 0.05, normalScale: 0.6, dark: 1 });
     const joint = lights.patch(new THREE.MeshStandardMaterial({ color: 0x1a1c20, roughness: 0.35, metalness: 0.9 }));
     this.surfaces.set('joint', joint);
     const chunk = lights.patch(new THREE.MeshStandardMaterial({ color: 0x77797c, roughness: 0.95, map: tex('assets/tex/concrete_formwork.webp') }));
@@ -68,7 +68,7 @@ export class Materials {
       roughnessMap: tex(`assets/tex/${file}_r.webp`, 'rough'),
       roughness: o.roughness ?? 0.8,
       metalness: o.metalness ?? 0,
-      color: new THREE.Color(o.tint ?? 0xffffff),
+      color: new THREE.Color(o.tint ?? 0xffffff).multiplyScalar(o.dark ?? 0.45),
     });
     m.normalScale.setScalar(o.normalScale ?? 1);
     this.lights.patch(m);

@@ -27,6 +27,9 @@ describe('room generator', () => {
       }
     });
   }
+  it('honours the requested exit count (one door per route)', () => {
+    for (const t of types) for (const n of [1, 2]) expect(generateRoom(5, t, 0, n).exits.length).toBe(n);
+  });
   it('rooms have breakable fixtures and props', () => {
     const r = generateRoom(99, 'arena', 0);
     expect(r.fixtures.filter(f => f.breakable).length).toBeGreaterThanOrEqual(6);

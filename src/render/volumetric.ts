@@ -120,7 +120,7 @@ export class VolumetricPass extends Pass {
   private rt: THREE.WebGLRenderTarget;
   private march: THREE.ShaderMaterial;
   private comp: THREE.ShaderMaterial;
-  strength = 0.3;
+  strength = 0.16;
 
   constructor(private cam: THREE.PerspectiveCamera, lights: LightManager, steps: number, private half: boolean) {
     super('VolumetricPass');
