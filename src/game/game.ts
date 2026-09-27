@@ -34,6 +34,7 @@ import { Bolts } from './bolts';
 import { Pickups } from './pickups';
 import { Hud } from '../ui/hud';
 import { CombatText } from '../ui/combattext';
+import { PartInstancer } from '../render/instancer';
 import { pickCard } from '../ui/cards';
 import { explode } from './combat';
 import { palette, Palette, CvdMode } from './palette';
@@ -76,6 +77,8 @@ export class Game {
   hud!: Hud;
   palette: Palette = palette('default');
   combatText!: CombatText;
+  /** undefined with ?noinst (A/B for perf work): androids and debris fall back to plain meshes */
+  instancer?: PartInstancer;
   menus!: Menus;
   dev!: DevOverlay;
   ctx!: Ctx;
@@ -147,6 +150,7 @@ export class Game {
     g.bolts = new Bolts(g.ctx, () => g.enemies);
     g.pickups = new Pickups(g.ctx);
     g.corpses = new Budget<Android>(40, a => g.disposeAndroid(a));
+    if (!new URLSearchParams(location.search).has('noinst')) g.instancer = new PartInstancer(g.renderer.scene);
     g.dev = new DevOverlay(ui, g);
     g.wireEvents();
     g.registerContacts();
@@ -843,6 +847,7 @@ export class Game {
     this.hud.setPrompt(this.mode === 'play' && !this.input.locked && !(window as any).__noLockPrompt ? 'CLICK TO ENGAGE' : null);
     this.hud.boss(this.boss && !this.boss.dead && this.mode !== 'title' ? this.boss.name : null, this.boss ? this.boss.hp / this.boss.maxHp : 0, this.boss?.state ?? '');
     this.renderer.wet.wetness = 1;
+    this.instancer?.flush();
     this.renderer.render(realDt, simDt);
     this.dev.update(realDt);
     this.frameMs = performance.now() - t0;
@@ -870,17 +875,19 @@ export class Game {
     this.player.pitch = -0.15;
     const gl = this.renderer.renderer.getContext(); const px = new Uint8Array(4);
     const times: number[] = [];
+    let calls = 0;
     for (let i = 0; i < 240; i++) {
       const t0 = performance.now();
       this.advance(1 / 60);
       gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
       times.push(performance.now() - t0);
+      calls = Math.max(calls, this.renderer.renderer.info.render.calls);
       if (i % 30 === 0) await new Promise(r => setTimeout(r, 0));
     }
     times.sort((a, b) => a - b);
     const q = (p: number) => times[Math.min(times.length - 1, Math.floor(p * times.length))].toFixed(1);
     const sz = this.renderer.drawSize;
-    const res = `BENCH ${sz.x}x${sz.y} ${this.renderer.quality}: p50 ${q(0.5)}ms p95 ${q(0.95)}ms p99 ${q(0.99)}ms · ragdolls ${this.corpses.size} debris ${this.debris.budget.size} lights ${L.lights.length}`;
+    const res = `BENCH ${sz.x}x${sz.y} ${this.renderer.quality}: p50 ${q(0.5)}ms p95 ${q(0.95)}ms p99 ${q(0.99)}ms · ragdolls ${this.corpses.size} debris ${this.debris.budget.size} lights ${L.lights.length} · draw calls ${calls}`;
     this.dev.benchResult = res;
     this.dev.visible = true;
     console.log(res);

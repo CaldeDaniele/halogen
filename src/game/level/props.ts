@@ -6,8 +6,13 @@ import { worldBox } from '../../render/materials';
 import { fractureBox } from '../../physics/fracture';
 import { explode } from '../combat';
 import { Budget } from '../../core/budget';
+import type { Part, PartInstancer } from '../../render/instancer';
 
-export interface Debris { mesh: THREE.Mesh; body: RAPIER.RigidBody; t: number; settledT: number }
+export interface Debris { mesh: THREE.Mesh; body: RAPIER.RigidBody; t: number; settledT: number; part?: Part; scale?: THREE.Vector3 }
+
+/** Box chunks are drawn as a unit box scaled per instance: every size shares one batch (UVs are 0..1 per face either way). */
+const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
+const _dm = new THREE.Matrix4(), _dp = new THREE.Vector3(), _dq = new THREE.Quaternion();
 
 const barrelGeo = new THREE.CylinderGeometry(0.45, 0.45, 1.1, 16);
 const bandGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.12, 16);
@@ -25,9 +30,18 @@ export class DebrisSystem {
     const col = w.createCollider(RAPIER.ColliderDesc.cuboid(Math.max(0.03, half[0]), Math.max(0.03, half[1]), Math.max(0.03, half[2])).setDensity(density).setFriction(0.9)
       .setCollisionGroups(groups(G.DEBRIS, ALL & ~G.PLAYER)), body);
     this.ctx.phys.tag(col, { kind: 'debris', surface: 'concrete' });
-    mesh.castShadow = true; mesh.receiveShadow = true;
-    this.ctx.scene.add(mesh);
     const d: Debris = { mesh, body, t: 0, settledT: 0 };
+    const inst: PartInstancer | undefined = this.ctx.game?.instancer;
+    if (inst && !Array.isArray(mesh.material)) {
+      const box = mesh.geometry.type === 'BoxGeometry' ? (mesh.geometry as THREE.BoxGeometry).parameters : null;
+      const unit = !!box && box.widthSegments === 1 && box.heightSegments === 1 && box.depthSegments === 1;
+      d.scale = unit ? new THREE.Vector3(box!.width, box!.height, box!.depth) : new THREE.Vector3(1, 1, 1);
+      d.part = inst.add(unit ? UNIT_BOX : mesh.geometry, mesh.material, true);
+      d.part.setMatrix(_dm.compose(pos, q, d.scale));
+    } else {
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      this.ctx.scene.add(mesh);
+    }
     this.budget.add(d);
     return d;
   }
@@ -35,7 +49,8 @@ export class DebrisSystem {
     for (const d of this.budget.items) {
       d.t += dt;
       const t = d.body.translation(), r = d.body.rotation();
-      d.mesh.position.set(t.x, t.y, t.z); d.mesh.quaternion.set(r.x, r.y, r.z, r.w);
+      if (d.part) d.part.setMatrix(_dm.compose(_dp.set(t.x, t.y, t.z), _dq.set(r.x, r.y, r.z, r.w), d.scale!));
+      else { d.mesh.position.set(t.x, t.y, t.z); d.mesh.quaternion.set(r.x, r.y, r.z, r.w); }
       if (d.t > 2 && d.t - dt <= 2) d.body.collider(0).setCollisionGroups(groups(G.DEBRIS, ALL & ~G.PLAYER & ~G.DEBRIS));
       if (t.y < -20) this.remove(d);
     }
@@ -44,6 +59,7 @@ export class DebrisSystem {
   private kill(d: Debris) {
     this.ctx.game?.kinetic?.forgetBody(d.body);
     this.ctx.phys.removeBody(d.body);
+    if (d.part) { this.ctx.game.instancer!.remove(d.part); return; } // chunk geometry was never uploaded; shared ones must survive
     d.mesh.removeFromParent();
     d.mesh.geometry.dispose();
   }

@@ -4,15 +4,19 @@ import { RAPIER, G, groups } from '../../physics/world';
 import type { Ctx, HitInfo, Owner } from '../types';
 import { ENEMIES, EnemyStats, EnemyType, SegDef } from './defs';
 import type { DynLight } from '../../render/lights';
+import type { Part, PartInstancer } from '../../render/instancer';
 
 const geoCache = new Map<string, THREE.BufferGeometry>();
 function geo(key: string, make: () => THREE.BufferGeometry) { let g = geoCache.get(key); if (!g) { g = make(); geoCache.set(key, g); } return g; }
 
 const matCache = new Map<string, THREE.MeshStandardMaterial>();
+/** Emissive parts share one white material when instanced; each instance carries its android's core color. */
+const INSTANCED_EMISSIVE = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
 export type AState = 'alive' | 'stagger' | 'held' | 'dead';
 
 const UP = new THREE.Vector3(0, 1, 0);
+const _m = new THREE.Matrix4();
 const DOWN = new THREE.Vector3(0, -1, 0);
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
 
@@ -64,6 +68,9 @@ export class Android {
   onSegHit?: (seg: Seg, h: HitInfo, dmg: number) => number;
   private ownerCache = new Map<Seg, Owner>();
   private punch = new Map<Seg, number>();
+  /** instanced parts: world = segment group matrix × cached local matrix (the meshes leave the scene graph) */
+  private parts: { mesh: THREE.Mesh; part: Part; emissive: boolean; group: THREE.Object3D; local: THREE.Matrix4 }[] = [];
+  private instancer?: PartInstancer;
   private shadeMats: THREE.Material[] = [];
 
   constructor(private ctx: Ctx, readonly type: EnemyType, pos: THREE.Vector3, yaw: number) {
@@ -77,6 +84,8 @@ export class Android {
     if (this.stats.flying) spawn.y += this.hoverY;
     this.body = new ArticulatedBody(ctx.phys, this.stats.body, s, spawn, yaw, (d, sc) => this.visual(d, sc), seg => this.ownerFor(seg));
     ctx.scene.add(this.body.object);
+    this.instancer = type === 'shade' ? undefined : ctx.game?.instancer; // shades fade per instance: keep real meshes
+    if (this.instancer) this.instanceParts(this.instancer);
     if (this.stats.hurtbox) this.body.addHurtbox(this.stats.hurtbox);
     this.core = ctx.lights.add({ pos: spawn.clone().add(new THREE.Vector3(0, 1.3 * s, 0)), color: this.coreColor, intensity: 3.5, radius: 3.5 * s });
     if (!this.stats.flying) {
@@ -163,6 +172,21 @@ export class Android {
     return g;
   }
 
+  private instanceParts(inst: PartInstancer) {
+    const root = this.body.object;
+    root.updateMatrixWorld(true);
+    const meshes: THREE.Mesh[] = [];
+    root.traverse(o => { if ((o as THREE.Mesh).isMesh) meshes.push(o as THREE.Mesh); });
+    for (const m of meshes) {
+      let group: THREE.Object3D = m;
+      while (group.parent && group.parent !== root) group = group.parent;
+      const local = group.matrixWorld.clone().invert().multiply(m.matrixWorld);
+      const emissive = m.material === this.emissiveMat;
+      this.parts.push({ mesh: m, emissive, group, local, part: inst.add(m.geometry, emissive ? INSTANCED_EMISSIVE : m.material as THREE.Material, m.castShadow) });
+      m.removeFromParent(); // nothing left for the renderer to traverse; muzzles and other empties stay
+    }
+  }
+
   get alive() { return this.state !== 'dead'; }
   get position() { return this.body.position; }
   /** Visual centre of mass: the root segment (pelvis / body / core), lifted to the chest on bipeds. */
@@ -228,11 +252,14 @@ export class Android {
 
   private breakPlate(h: HitInfo) {
     const torso = this.body.seg('torso')!;
-    const plate = torso.group.children.find(c => c.name === 'plate');
+    const pi = this.parts.findIndex(p => p.mesh.name === 'plate');
+    const plate = pi >= 0 ? this.parts[pi].mesh : torso.group.children.find(c => c.name === 'plate');
     if (!plate) { this.plates = 0; return; }
+    torso.group.updateMatrixWorld();
+    const wp = new THREE.Vector3().setFromMatrixPosition(pi >= 0 ? _m.multiplyMatrices(torso.group.matrixWorld, this.parts[pi].local) : plate.matrixWorld);
     plate.removeFromParent();
+    if (pi >= 0) { this.instancer!.remove(this.parts[pi].part); this.parts.splice(pi, 1); }
     this.plates--;
-    const wp = plate.getWorldPosition(new THREE.Vector3());
     this.ctx.game.spawnDebrisPiece(wp, (plate as THREE.Mesh).geometry, (plate as THREE.Mesh).material, h.dir.clone().multiplyScalar(4).add(new THREE.Vector3(0, 3, 0)));
     this.ctx.particles.sparksAt(wp, h.normal, 25, 0xffd28a, 10, 1, 0.6);
     this.ctx.sfx.play('impactMetal', { pos: wp, gain: 1.6 });
@@ -513,6 +540,12 @@ export class Android {
   sync() {
     this.body.syncVisuals();
     for (const [sg, p] of this.punch) sg.group.scale.setScalar(1 + p * p * 0.22);
+    if (this.parts.length) {
+      // segment groups sit directly under an untransformed root, so their local matrix is their world matrix
+      for (const s of this.body.segs) s.group.updateMatrix();
+      const c = this.emissiveMat.color;
+      for (const p of this.parts) { p.part.setMatrix(_m.multiplyMatrices(p.group.matrix, p.local)); if (p.emissive) p.part.setColor(c); }
+    }
     if (this.shadeMats.length) {
       const op = this.state === 'dead' ? 1 : 0.04 + 0.96 * this.visibility;
       for (const m of this.shadeMats) (m as THREE.MeshStandardMaterial).opacity = op;
@@ -524,6 +557,8 @@ export class Android {
     const ctx = this.ctx;
     for (const sg of this.body.segs) ctx.game?.kinetic?.forgetBody(sg.body);
     ctx.lights.remove(this.core);
+    for (const p of this.parts) this.instancer!.remove(p.part);
+    this.parts = [];
     if (this.mover) ctx.phys.world.removeCollider(this.mover, false);
     if (this.kcc) ctx.phys.world.removeCharacterController(this.kcc);
     this.body.dispose();
