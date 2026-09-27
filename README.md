@@ -50,7 +50,9 @@ Three pillars, each backed by a system:
 3. **Light is contested.** Standing in light charges **Lumen** (it powers the kinetic hand). Shooting a fixture
    gives a burst of it, but that zone goes dark. *Shades* are invisible and can't be hit in darkness.
    *Lamplighter* drones fly to broken lights and repair them. Every enemy attack is telegraphed by its
-   emissive core flaring.
+   emissive core flaring. A colorblind setting (deuteranopia / protanopia / tritanopia) swaps every tell and
+   HUD damage color for a palette verified against a simulation of that deficiency
+   ([`palette.ts`](src/game/palette.ts)).
 
 A run is 3 sectors × a branching 6-layer route (Slay the Spire style). Each exit door shows the room type
 and reward behind it. Clearing a room offers 1 of 3 cards (45 cards, tag-weighted for synergies). Sector
@@ -159,12 +161,12 @@ above 21 ms for 4 s.
 ## Tests
 
 ```bash
-npm test             # 131 unit tests (vitest): rng, loop, time, budget, events, input, clustering,
+npm test             # 146 unit tests (vitest): rng, loop, time, budget, events, input, clustering,
                      #   generator reachability, run map, cards/synergies/unlocks, fracture, defs, springs,
-                     #   director budgets, damage-number merging, throw aim assist, hurtboxes
+                     #   director budgets, damage-number merging, throw aim assist, hurtboxes, CVD palettes
 npm run test:e2e     # Playwright (system Edge): boots a seed, runs a scripted bot for 10 s of combat,
                      #   clears the room, asserts zero console errors; settings persistence; kinetic
-                     #   throw assist; damage numbers/HP bars; Skitter hurtbox
+                     #   throw assist; damage numbers/HP bars; Skitter hurtbox; colorblind palette
 BENCH=1 npx playwright test e2e/bench.spec.ts   # perf harness
 SHOTS=1 npx playwright test e2e/shots.spec.ts   # regenerates the screenshots above
 ```

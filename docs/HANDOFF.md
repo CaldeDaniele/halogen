@@ -23,8 +23,8 @@ prioritized backlog. Read it fully before changing code.
 FPS cap), dev overlay (F1–F4), `?seed=` and `?bench`.
 
 **Quality gates (all green at handoff):**
-- `npm test` → 131 unit tests (vitest)
-- `npm run test:e2e` → 9 Playwright tests (system Edge channel, no browser download)
+- `npm test` → 146 unit tests (vitest)
+- `npm run test:e2e` → 10 Playwright tests (system Edge channel, no browser download)
 - `npx tsc --noEmit` clean, `npm run build` OK
 
 **Measured performance:** typical combat Ultra 1600×900 ≈ 127 fps (headless Edge, GPU); worst case
@@ -139,7 +139,7 @@ Legend: **P1** do first · **P2** next · **P3** nice to have. Each item lists w
 
 | ID | Pri | Item | Where | Done when |
 |---|---|---|---|---|
-| A1 | P1 | *(spec gap)* **Colorblind-safe telegraph palette** setting | `menus.ts` (Settings), `ENEMIES[*].attackColor` in `defs.ts`, `android.ts` flare, `bosses.ts` telegraphs | Settings toggle (Default / Deuteranopia / Protanopia / Tritanopia); all attack tells + HUD damage colors remap; persisted; e2e checks toggle persists |
+| A1 | P1 | ~~Colorblind-safe telegraph palette~~ **done (round 2)**: `src/game/palette.ts`, CVD-simulated tests in `tests/palette.test.ts` | `menus.ts` (Settings), `ENEMIES[*].attackColor` in `defs.ts`, `android.ts` flare, `bosses.ts` telegraphs | Settings toggle (Default / Deuteranopia / Protanopia / Tritanopia); all attack tells + HUD damage colors remap; persisted; e2e checks toggle persists |
 | A2 | P1 | *(spec gap)* **Temporal accumulation for volumetrics** (currently half-res + 5-tap blur → visible noise) | `src/render/volumetric.ts` | history buffer with reprojection via previous view-proj matrix, neighborhood clamp to avoid ghosting; noise visibly reduced in `docs/shots`; no ghost trails on fast camera turns; bench not worse than +1 ms |
 | A3 | P2 | *(spec gap)* **Active-ragdoll hit reactions with joint motors** (now: kinematic flinch springs; heavy hits → full ragdoll + blend recovery) | `src/physics/ragdoll.ts`, `android.ts` `hit`/`stagger` | medium hits make the struck limb chain go dynamic with motors pulling back to pose (Rapier revolute `configureMotorPosition`; spherical joints need a workaround), android stays standing; light hits keep springs; no jitter/explosions (see Unity-style ragdoll pitfalls) |
 | A4 | P2 | *(spec gap)* **Real 3D LUT per sector** (now Hue/Sat + Brightness/Contrast) | `renderer.ts` post stack (`LUT3DEffect` from postprocessing) | 3 authored LUTs (generate procedurally or bake from a grading pass), switched in `Game.applySector` |
