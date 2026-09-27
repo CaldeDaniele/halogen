@@ -44,13 +44,30 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .hud-cross.lit .ring-lumen { stroke: #bffcff; }
 .hud-cross.holding line { stroke: var(--cyan); }
 @keyframes pulse { from { opacity: .6 } to { opacity: 1; stroke-width: 3.5 } }
-.hud-hit { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; transform: translate(-50%, -50%) rotate(45deg); opacity: 0; }
-.hud-hit i { position: absolute; background: #fff; width: 2px; height: 9px; left: 16px; }
+.hud-hit { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%) rotate(45deg); opacity: 0; }
+.hud-hit.pop { animation: hitpop .16s ease-out; }
+@keyframes hitpop { from { transform: translate(-50%, -50%) rotate(45deg) scale(1.55); } to { transform: translate(-50%, -50%) rotate(45deg) scale(1); } }
+.hud-hit i { position: absolute; background: #fff; width: 3px; height: 13px; left: 20.5px; box-shadow: 0 0 4px rgba(255, 255, 255, .8); }
 .hud-hit i:nth-child(1) { top: 0 } .hud-hit i:nth-child(2) { bottom: 0 }
-.hud-hit i:nth-child(3) { width: 9px; height: 2px; left: 0; top: 16px } .hud-hit i:nth-child(4) { width: 9px; height: 2px; right: 0; left: auto; top: 16px }
-.hud-hit.kill i { background: var(--red); box-shadow: 0 0 6px var(--red); }
-.hud-hit.head i { background: var(--amber); box-shadow: 0 0 8px var(--amber); height: 12px; }
-.hud-hit.head i:nth-child(3), .hud-hit.head i:nth-child(4) { width: 12px; height: 2px; }
+.hud-hit i:nth-child(3) { width: 13px; height: 3px; left: 0; top: 20.5px } .hud-hit i:nth-child(4) { width: 13px; height: 3px; right: 0; left: auto; top: 20.5px }
+.hud-hit.kill { width: 56px; height: 56px; }
+.hud-hit.kill i { background: var(--red); box-shadow: 0 0 10px var(--red); left: 26.5px; height: 17px; }
+.hud-hit.kill i:nth-child(3), .hud-hit.kill i:nth-child(4) { width: 17px; height: 3px; left: 0; top: 26.5px; }
+.hud-hit.kill i:nth-child(4) { left: auto; right: 0; }
+.hud-hit.head i { background: var(--amber); box-shadow: 0 0 10px var(--amber); height: 16px; }
+.hud-hit.head i:nth-child(3), .hud-hit.head i:nth-child(4) { width: 16px; height: 3px; }
+/* combat text: damage numbers + enemy HP bars */
+.ctext { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.dmgnum { position: absolute; left: 0; top: 0; font-family: var(--mono); font-weight: 700; font-size: 17px; color: #fff; white-space: nowrap;
+  text-shadow: 0 0 2px #000, 0 1px 3px #000, 0 0 10px rgba(25, 240, 255, .5); will-change: transform, opacity; }
+.dmgnum span { display: inline-block; }
+.dmgnum span.bump { animation: numpop .18s ease-out; }
+@keyframes numpop { from { transform: scale(1.6); } to { transform: scale(1); } }
+.dmgnum.head { color: var(--amber); font-size: 21px; text-shadow: 0 0 2px #000, 0 1px 3px #000, 0 0 12px rgba(255, 176, 46, .7); }
+.dmgnum.kill { color: var(--red); font-size: 23px; text-shadow: 0 0 2px #000, 0 1px 3px #000, 0 0 14px rgba(255, 59, 59, .8); }
+.ehp { position: absolute; left: 0; top: 0; width: 46px; height: 4px; background: rgba(0, 0, 0, .55); outline: 1px solid rgba(255, 255, 255, .18); will-change: transform, opacity; }
+.ehp b { position: absolute; inset: 0; background: #e8f4f8; transform-origin: left; transition: transform .12s; }
+.ehp .sh { position: absolute; inset: 0; background: var(--amber); opacity: .85; transform-origin: left; transform: scaleX(0); }
 .hud-dmgdirs { position: absolute; left: 50%; top: 50%; }
 .dmgdir { position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%; border-top: 4px solid var(--red);
   filter: drop-shadow(0 0 6px var(--red)); animation: fade .9s forwards; }

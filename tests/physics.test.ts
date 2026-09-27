@@ -42,6 +42,33 @@ describe('physics queries', () => {
   });
 });
 
+describe('android hurtbox (small fast enemies)', () => {
+  it('an enlarged sensor on the root catches near-miss shots, adds no mass, and can be removed', async () => {
+    const THREE = await import('three');
+    const { ArticulatedBody } = await import('../src/physics/ragdoll');
+    const { QUAD } = await import('../src/game/enemies/defs');
+    const { SHOT_FILTER } = await import('../src/game/combat');
+    const owners: any[] = [];
+    const body = new ArticulatedBody(phys, QUAD, 0.9, new THREE.Vector3(20, 0, 0), 0, () => new THREE.Group(), seg => { const o = { kind: 'android', seg }; owners.push(o); return o; });
+    phys.world.step();
+    // a shot skimming just over the Skitter's back misses its real colliders
+    const shoot = () => phys.ray(20, 0.8, 5, 0, 0, -1, 20, SHOT_FILTER);
+    expect(shoot()).toBeNull();
+    const mass = body.root.body.mass();
+    body.addHurtbox(0.55);
+    phys.world.step();
+    const hit = shoot();
+    expect(hit).not.toBeNull();
+    expect(hit!.collider.isSensor()).toBe(true);
+    expect(phys.ownerOf(hit!.collider.handle)?.seg).toBe(body.root);
+    expect(body.root.body.mass()).toBeCloseTo(mass, 5);
+    body.removeHurtbox();
+    phys.world.step();
+    expect(shoot()).toBeNull();
+    body.dispose();
+  });
+});
+
 describe('kinetic hand vs removed bodies', () => {
   it('prunes held bodies that were removed elsewhere instead of touching them', async () => {
     const THREE = await import('three');

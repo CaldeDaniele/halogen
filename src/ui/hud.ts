@@ -110,7 +110,7 @@ export class Hud {
     this.info.innerHTML = `${s.room}${s.enemies > 0 ? ` <b>${s.enemies}</b> HOSTILE` : ''}`;
     this.bt.classList.toggle('on', s.bulletTime);
     this.hitT = Math.max(0, this.hitT - dt);
-    this.hit.style.opacity = String(Math.min(1, this.hitT * 8));
+    this.hit.style.opacity = String(Math.min(1, this.hitT * 6));
     this.dmgT = Math.max(0, this.dmgT - dt * 1.8);
     this.vign.style.opacity = String(this.dmgT);
     this.lowHp.style.opacity = hpK < 0.35 ? String(0.35 + 0.25 * Math.sin(performance.now() / 180)) : '0';
@@ -127,8 +127,9 @@ export class Hud {
   }
 
   hitmarker(kind: 'hit' | 'kill' | 'head') {
-    this.hitT = kind === 'hit' ? 0.12 : 0.3;
+    this.hitT = kind === 'hit' ? 0.18 : 0.4;
     this.hit.className = 'hud-hit ' + kind;
+    void this.hit.offsetWidth; this.hit.classList.add('pop'); // restart the scale pop on every hit
   }
 
   damage(fromAngle: number | null) {

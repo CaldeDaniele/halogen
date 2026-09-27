@@ -118,11 +118,11 @@ export class AndroidAI {
   private onEnter(name: string) {
     const a = this.a, ctx = this.ctx;
     const tellColor = a.stats.attackColor;
-    if (name === 'shoot') { this.windup = 0.5; a.flare = 1; a.flareColor.set(tellColor); ctx.sfx.play('telegraph', { pos: a.center, pitch: 1 }); }
+    if (name === 'shoot') { this.windup = 0.6; a.flare = 1; a.flareColor.set(tellColor); ctx.sfx.play('telegraph', { pos: a.center, pitch: 1 }); }
     if (name === 'rush') { this.windup = 0.65; a.flare = 1; a.flareColor.set(tellColor); ctx.sfx.play('charger', { pos: a.center }); }
     if (name === 'smash') { this.windup = 0.4; a.flare = 1; a.flareColor.set(tellColor); }
-    if (name === 'leap') { this.windup = 0.3; a.flare = 1; a.flareColor.set(tellColor); ctx.sfx.play('skitter', { pos: a.center }); }
-    if (name === 'bite') { this.windup = 0.25; a.flare = 1; a.flareColor.set(tellColor); }
+    if (name === 'leap') { this.windup = 0.45; a.flare = 1; a.flareColor.set(tellColor); ctx.sfx.play('skitter', { pos: a.center }); }
+    if (name === 'bite') { this.windup = 0.35; a.flare = 1; a.flareColor.set(tellColor); }
     if (name === 'lunge') { this.windup = 0.38; a.flare = 1; a.flareColor.set(tellColor); ctx.sfx.play('telegraph', { pos: a.center, pitch: 0.6 }); }
     if (name === 'strafe') this.strafeSign *= -1;
   }
@@ -154,8 +154,8 @@ export class AndroidAI {
         this.burstT = a.type === 'foreman' ? 0.09 : 0.14;
         this.burst--;
         const m = a.muzzle();
-        const aimAt = a.aimPoint.clone().add(new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.5) * 0.6, (Math.random() - 0.5)).multiplyScalar(0.8 + this.dist * 0.03));
-        ctx.game.enemyFire(m, aimAt.sub(m).normalize(), st.dmg, st.attackColor, a.type === 'foreman' ? 34 : 30);
+        const aimAt = a.aimPoint.clone().add(new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.5) * 0.6, (Math.random() - 0.5)).multiplyScalar(1.1 + this.dist * 0.04));
+        ctx.game.enemyFire(m, aimAt.sub(m).normalize(), st.dmg, st.attackColor, a.type === 'foreman' ? 32 : 26);
         if (this.burst <= 0) this.cooldown = st.fireRate * (0.7 + Math.random() * 0.6);
       }
       return;

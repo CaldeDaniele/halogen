@@ -63,6 +63,7 @@ export class Android {
   /** boss hook: called on every hit while alive; may return a damage multiplier */
   onSegHit?: (seg: Seg, h: HitInfo, dmg: number) => number;
   private ownerCache = new Map<Seg, Owner>();
+  private punch = new Map<Seg, number>();
   private shadeMats: THREE.Material[] = [];
 
   constructor(private ctx: Ctx, readonly type: EnemyType, pos: THREE.Vector3, yaw: number) {
@@ -76,6 +77,7 @@ export class Android {
     if (this.stats.flying) spawn.y += this.hoverY;
     this.body = new ArticulatedBody(ctx.phys, this.stats.body, s, spawn, yaw, (d, sc) => this.visual(d, sc), seg => this.ownerFor(seg));
     ctx.scene.add(this.body.object);
+    if (this.stats.hurtbox) this.body.addHurtbox(this.stats.hurtbox);
     this.core = ctx.lights.add({ pos: spawn.clone().add(new THREE.Vector3(0, 1.3 * s, 0)), color: this.coreColor, intensity: 3.5, radius: 3.5 * s });
     if (!this.stats.flying) {
       const r = 0.35 * s, hh = Math.max(0.1, 0.9 * s - r);
@@ -88,6 +90,8 @@ export class Android {
   }
 
   private ownerFor(seg: Seg): Owner {
+    const cached = this.ownerCache.get(seg);
+    if (cached) return cached;
     const o: Owner = { kind: 'android', android: this, seg, surface: 'android', hit: (h: HitInfo) => this.hit(h, seg) };
     this.ownerCache.set(seg, o);
     return o;
@@ -204,15 +208,18 @@ export class Android {
     this.hp -= dmg;
     this.lastHitBy = h.source;
     h.headshot = headshot;
+    h.dealt = dmg;
     // flinch: rotate the hit segment chain away from the shot
     const local = _v2.copy(h.dir).applyAxisAngle(UP, -this.body.yaw);
     const fk = Math.min(6, 1 + h.impulse * 0.25);
     const chain = [seg, seg.parent, seg.parent?.parent].filter(Boolean) as Seg[];
-    chain.forEach((c, i) => { c.flinchV.x += -local.z * fk * (1 - i * 0.3) * 3; c.flinchV.z += local.x * fk * (1 - i * 0.3) * 3; });
+    chain.forEach((c, i) => { c.flinchV.x += -local.z * fk * (1 - i * 0.3) * 5; c.flinchV.z += local.x * fk * (1 - i * 0.3) * 5; });
+    // visual punch on the struck part (render-only scale pulse, physics untouched)
+    this.punch.set(seg, Math.min(1, (this.punch.get(seg) ?? 0) + 0.5 + dmg / 80));
     // knockback
-    if (this.state === 'alive') this.vel.addScaledVector(h.dir, h.impulse / (6 * this.stats.scale ** 2));
+    if (this.state === 'alive') this.vel.addScaledVector(h.dir, h.impulse / (3.5 * this.stats.scale ** 2));
     this.staggerAccum += dmg + h.impulse * 1.5;
-    this.flare = Math.max(this.flare, 0.35); this.flareColor.set(0xffffff);
+    this.flare = Math.max(this.flare, 0.8); this.flareColor.set(0xffffff);
     ctx.events.emit('enemyHit', { hit: h, enemy: this });
     if (this.hp <= 0) { this.die(h, seg); return; }
     if (this.state === 'alive' && this.staggerAccum > this.stats.stagger && !this.isBoss) this.stagger(h, seg);
@@ -257,6 +264,7 @@ export class Android {
     this.state = 'dead';
     this.deadT = 0;
     this.killedByKinetic = h.source === 'kinetic';
+    this.body.removeHurtbox();
     const imp = _v.copy(h.dir).multiplyScalar(h.impulse * 1.6 + 4).add(new THREE.Vector3(0, h.impulse * 0.4 + 1.5, 0));
     if (wasAlive || this.body.mode !== 'ragdoll') this.body.goRagdoll(imp, h.point, seg);
     else seg?.body.applyImpulseAtPoint(imp, h.point, true);
@@ -291,6 +299,7 @@ export class Android {
     const b = this.body;
     const s = this.stats.scale;
     this.flare = Math.max(0, this.flare - dt * 3);
+    for (const [sg, p] of this.punch) { const n = p - dt * 7; if (n <= 0) { this.punch.delete(sg); sg.group.scale.setScalar(1); } else this.punch.set(sg, n); }
     if (this.burning > 0 && this.state !== 'dead') {
       this.burning -= dt;
       if (Math.random() < dt * 8) this.hit({ point: this.center, normal: UP, dir: UP.clone(), damage: 6, impulse: 0, source: 'player', weapon: 'thermite' }, b.root);
@@ -503,6 +512,7 @@ export class Android {
 
   sync() {
     this.body.syncVisuals();
+    for (const [sg, p] of this.punch) sg.group.scale.setScalar(1 + p * p * 0.22);
     if (this.shadeMats.length) {
       const op = this.state === 'dead' ? 1 : 0.04 + 0.96 * this.visibility;
       for (const m of this.shadeMats) (m as THREE.MeshStandardMaterial).opacity = op;

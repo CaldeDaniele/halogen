@@ -4,7 +4,7 @@ import type { RoomType } from '../level/generator';
 
 export interface WaveEnemy { type: EnemyType; count: number }
 
-const COST: Record<EnemyType, number> = { grunt: 2, skitter: 1, charger: 4, shade: 3, lamplighter: 3, foreman: 99 };
+export const ENEMY_COST: Record<EnemyType, number> = { grunt: 2, skitter: 1, charger: 4, shade: 3, lamplighter: 3, foreman: 99 };
 
 /**
  * Left-4-Dead-style pacing: a room has a point budget split into waves; the next wave is
@@ -20,7 +20,7 @@ export class Director {
 
   constructor(private rng: Rng, readonly sector: number, readonly roomDepth: number, readonly type: RoomType) {
     if (type === 'rest' || type === 'boss') return;
-    const budget = Math.round((12 + roomDepth * 2.5 + sector * 8) * (type === 'elite' ? 1.5 : type === 'gauntlet' ? 0.9 : 1));
+    const budget = Math.round((10 + roomDepth * 2 + sector * 7) * (type === 'elite' ? 1.5 : type === 'gauntlet' ? 0.9 : 1));
     const nWaves = type === 'gauntlet' ? 2 : budget > 20 ? 4 : 3;
     const allowed: EnemyType[] = ['grunt', 'skitter'];
     if (sector > 0 || roomDepth >= 2) allowed.push('charger');
@@ -35,11 +35,11 @@ export class Director {
       let guard = 0;
       while (pts > 0 && guard++ < 50) {
         let t = rng.weighted(allowed, e => e === 'grunt' ? 3 : e === 'skitter' ? 2 : e === 'shade' ? (type === 'dark' ? 3 : 1) : 1);
-        if (COST[t] > pts) t = pts >= 2 ? 'grunt' : 'skitter';
+        if (ENEMY_COST[t] > pts) t = pts >= 2 ? 'grunt' : 'skitter';
         if (t === 'lamplighter' && (wave.get('lamplighter') ?? 0) >= 1) t = 'grunt';
         const n = t === 'skitter' ? Math.min(pts, 3) : 1;
         wave.set(t, (wave.get(t) ?? 0) + n);
-        pts -= COST[t] * n;
+        pts -= ENEMY_COST[t] * n;
       }
       this.waves.push([...wave].map(([type, count]) => ({ type, count })));
     }
@@ -62,7 +62,7 @@ export class Director {
     if (this.hold > 0) return null;
     const threshold = this.waveIndex === 0 ? 99 : target > 0.6 ? 0 : target > 0.35 ? 1 : 2 + Math.min(2, this.roomDepth / 2);
     if (alive <= threshold) {
-      this.hold = 2.5 + target * 3;
+      this.hold = 3 + target * 4; // breathing room between waves, longer when the player is struggling
       return this.waves[this.waveIndex++];
     }
     return null;

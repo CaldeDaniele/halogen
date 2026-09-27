@@ -40,7 +40,7 @@ export class Bolts {
       if (!b.friendly && !dead) {
         const closest = this.closestOnSeg(b.pos, b.pos.clone().add(step), pp);
         const dy = Math.max(0, Math.abs(closest.y - pp.y) - 0.5);
-        if (Math.hypot(closest.x - pp.x, dy, closest.z - pp.z) < 0.5) { ctx.game.damagePlayer(b.dmg, b.pos); dead = true; }
+        if (Math.hypot(closest.x - pp.x, dy, closest.z - pp.z) < 0.42) { ctx.game.damagePlayer(b.dmg, b.pos); dead = true; }
       }
       if (b.friendly && !dead) {
         for (const e of this.enemies()) {

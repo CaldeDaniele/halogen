@@ -49,9 +49,10 @@ export class ArticulatedBody {
   blendT = 0;
   blendDur = 0.45;
   readonly object = new THREE.Group();
+  private hurtbox?: RAPIER.Collider;
 
   constructor(private phys: PhysicsWorld, defs: SegDef[], readonly scale: number, pos: THREE.Vector3, yaw: number,
-    makeVisual: (d: SegDef, scale: number) => THREE.Group, owner: (seg: Seg) => any) {
+    makeVisual: (d: SegDef, scale: number) => THREE.Group, private owner: (seg: Seg) => any) {
     this.position.copy(pos); this.yaw = yaw;
     const w = phys.world;
     const bodyQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
@@ -97,6 +98,26 @@ export class ArticulatedBody {
   }
 
   seg(name: string) { return this.byName.get(name); }
+
+  /**
+   * Massless sensor ball on the root that routes hits to it: small, fast bodies (Skitters) get a
+   * forgiving target without changing their physical collision shape. Players/KCCs ignore sensors.
+   */
+  addHurtbox(radius: number) {
+    if (this.hurtbox) return;
+    const r = this.root;
+    this.hurtbox = this.phys.world.createCollider(RAPIER.ColliderDesc.ball(radius * this.scale).setSensor(true).setDensity(0)
+      .setCollisionGroups(LIVE_GROUPS), r.body);
+    this.phys.tag(this.hurtbox, this.owner(r));
+  }
+
+  removeHurtbox() {
+    const h = this.hurtbox;
+    if (!h) return;
+    this.hurtbox = undefined;
+    this.phys.userData.delete(h.handle);
+    if (this.phys.world.getCollider(h.handle)) this.phys.world.removeCollider(h, false);
+  }
 
   /** Compute FK deformation for every segment from local rotations + flinch springs. */
   private fk() {

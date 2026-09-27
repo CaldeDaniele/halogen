@@ -64,13 +64,15 @@ export interface EnemyStats {
   type: EnemyType; body: SegDef[]; scale: number; hp: number; speed: number; color: number; attackColor: number;
   /** damage per shot / melee */
   dmg: number; range: number; fireRate: number; stagger: number; score: number; flying?: boolean; quad?: boolean;
+  /** radius (body units) of a forgiving sensor hurtbox on the root, for small fast bodies */
+  hurtbox?: number;
 }
 
 export const ENEMIES: Record<EnemyType, EnemyStats> = {
-  grunt: { type: 'grunt', body: BIPED, scale: 1, hp: 70, speed: 4.2, color: 0x19f0ff, attackColor: 0xff3b3b, dmg: 7, range: 30, fireRate: 1.5, stagger: 60, score: 100 },
-  charger: { type: 'charger', body: BIPED, scale: 1.32, hp: 240, speed: 3.3, color: 0xffb02e, attackColor: 0xff5a1a, dmg: 26, range: 3, fireRate: 2.5, stagger: 160, score: 300 },
-  skitter: { type: 'skitter', body: QUAD, scale: 0.9, hp: 28, speed: 8.5, color: 0xff2bd6, attackColor: 0xff2bd6, dmg: 9, range: 2.2, fireRate: 1.1, stagger: 10, score: 60, quad: true },
-  shade: { type: 'shade', body: BIPED, scale: 1.05, hp: 55, speed: 6.5, color: 0x8a5cff, attackColor: 0xb46bff, dmg: 16, range: 2.4, fireRate: 1.3, stagger: 50, score: 180 },
+  grunt: { type: 'grunt', body: BIPED, scale: 1, hp: 70, speed: 4.2, color: 0x19f0ff, attackColor: 0xff3b3b, dmg: 5, range: 30, fireRate: 1.5, stagger: 60, score: 100 },
+  charger: { type: 'charger', body: BIPED, scale: 1.32, hp: 240, speed: 3.3, color: 0xffb02e, attackColor: 0xff5a1a, dmg: 20, range: 3, fireRate: 2.5, stagger: 160, score: 300 },
+  skitter: { type: 'skitter', body: QUAD, scale: 0.9, hp: 28, speed: 7.2, color: 0xff2bd6, attackColor: 0xff2bd6, dmg: 7, range: 2.2, fireRate: 1.1, stagger: 10, score: 60, quad: true, hurtbox: 0.55 },
+  shade: { type: 'shade', body: BIPED, scale: 1.05, hp: 55, speed: 6.5, color: 0x8a5cff, attackColor: 0xb46bff, dmg: 12, range: 2.4, fireRate: 1.3, stagger: 50, score: 180 },
   lamplighter: { type: 'lamplighter', body: DRONE, scale: 1, hp: 45, speed: 5, color: 0xfff1b0, attackColor: 0xfff1b0, dmg: 0, range: 14, fireRate: 3, stagger: 20, score: 150, flying: true },
   foreman: { type: 'foreman', body: BIPED, scale: 2.6, hp: 2600, speed: 3.2, color: 0x19f0ff, attackColor: 0xff3b3b, dmg: 22, range: 40, fireRate: 1.2, stagger: 99999, score: 3000 },
 };

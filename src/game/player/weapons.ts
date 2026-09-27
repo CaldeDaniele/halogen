@@ -223,33 +223,45 @@ export class WeaponSystem {
     const tags = new Set<string>();
     if (mods.thermite) tags.add('thermite');
     const extra = mods.refraction && ctx.game.inLight > 0.3 && def.kind === 'hitscan' ? 2 : 0;
+    let struck = false;
     for (let p = 0; p < def.pellets + extra; p++) {
       const dir = this.aimDir((p >= def.pellets ? 0.045 : 0) + def.spread * (ctx.player.grounded ? 1 : 1.3) + (def.pellets === 1 ? Math.min(0.02, ctx.player.horizSpeed * 0.0006) : 0));
-      this.trace(eye, dir, muzzle, def, def.dmg * mods.dmgMul * over, pierceAll ? 99 : mods.pierce, mods.ricochet, tags);
+      struck = this.trace(eye, dir, muzzle, def, def.dmg * mods.dmgMul * over, pierceAll ? 99 : mods.pierce, mods.ricochet, tags) || struck;
     }
+    // heavy weapons "land": a few ms of hit-stop when they connect
+    if (struck && def.id === 'scatter') ctx.time.hitstop(22);
+    if (struck && def.id === 'rail') ctx.time.hitstop(45);
     if (mods.flare && this.shotCount % 5 === 0) {
       const hit = ctx.phys.ray(eye.x, eye.y, eye.z, ...this.aimDir(0).toArray() as [number, number, number], 80, SHOT_FILTER, ctx.player.collider);
       if (hit) ctx.game.spawnFlare(new THREE.Vector3(hit.x + hit.nx * 0.2, hit.y + hit.ny * 0.2, hit.z + hit.nz * 0.2));
     }
   }
 
-  /** Hitscan with pierce and ricochet. Draws the tracer from the muzzle to the final impact. */
+  /**
+   * Hitscan with pierce and ricochet. Draws the tracer from the muzzle to the final impact.
+   * Pierce counts enemies, not colliders: one android (segments + hurtbox) takes one hit per ray.
+   * Returns whether an enemy was struck.
+   */
   private trace(origin: THREE.Vector3, dir: THREE.Vector3, muzzle: THREE.Vector3, def: WeaponDef, dmg: number, pierce: number, ricochet: number, tags: Set<string>) {
     const ctx = this.ctx;
     let o = origin.clone(), d = dir.clone();
     let from = muzzle.clone();
     const hitSet = new Set<number>();
+    const hitEnemies = new Set<object>();
+    let struck = false;
     let bounces = ricochet;
     let remaining = 120;
     for (let iter = 0; iter < 12 && remaining > 0; iter++) {
       const hit = ctx.phys.world.castRayAndGetNormal(new RAPIER.Ray(o, d), remaining, true, undefined, SHOT_FILTER, undefined, undefined,
-        (c: any) => c.handle !== ctx.player.collider.handle && !hitSet.has(c.handle));
-      if (!hit) { this.tracer(from, o.clone().addScaledVector(d, remaining), def, def.kind === 'rail'); return; }
+        (c: any) => c.handle !== ctx.player.collider.handle && !hitSet.has(c.handle) && !hitEnemies.has(ctx.phys.ownerOf(c.handle)?.android));
+      if (!hit) { this.tracer(from, o.clone().addScaledVector(d, remaining), def, def.kind === 'rail'); return struck; }
       const p = o.clone().addScaledVector(d, hit.timeOfImpact);
       const n = new THREE.Vector3(hit.normal.x, hit.normal.y, hit.normal.z);
       const owner = ctx.phys.ownerOf(hit.collider.handle) as Owner | undefined;
       const h: HitInfo = { point: p, normal: n, dir: d.clone(), damage: dmg, impulse: def.impulse, source: 'player', weapon: def.id, pin: def.kind === 'rail', bulletTime: ctx.time.isBulletTime, tags };
       dealHit(ctx, hit.collider, h);
+      if (owner?.android) hitEnemies.add(owner.android);
+      if (owner?.kind === 'boss' || owner?.kind === 'android' && !owner.severed && owner.android?.alive) struck = true;
       const surface = owner?.surface ?? (owner?.kind === 'android' ? 'android' : 'concrete');
       if (!owner || owner.kind === 'static' || owner.kind === 'prop' || owner.kind === 'debris') surfaceImpact(ctx, p, n, surface, def.color, def.kind === 'rail');
       else if (owner.kind === 'android' || owner.kind === 'boss') surfaceImpact(ctx, p, n, 'android', def.color, def.kind === 'rail', false);
@@ -261,15 +273,16 @@ export class WeaponSystem {
         if (bounces > 0) {
           bounces--; from = p.clone();
           d = d.clone().reflect(n).normalize(); o = p.clone().addScaledVector(n, 0.02); dmg *= 0.7;
-          hitSet.clear();
+          hitSet.clear(); hitEnemies.clear();
           continue;
         }
-        return;
+        return struck;
       }
-      if (pierce <= 0) { this.tracer(from, p, def, def.kind === 'rail'); return; }
+      if (pierce <= 0) { this.tracer(from, p, def, def.kind === 'rail'); return struck; }
       pierce--;
       o = p.clone().addScaledVector(d, 0.05);
     }
+    return struck;
   }
 
   tracer(a: THREE.Vector3, b: THREE.Vector3, def: WeaponDef, thick = false, life?: number) {

@@ -3,9 +3,11 @@ import { RAPIER, G, groups } from '../../physics/world';
 import type { Ctx, Owner } from '../types';
 import { Input } from '../../core/input';
 import type { Android } from '../enemies/android';
+import { pickAssistTarget } from '../feedback';
 
 const GRAB_FILTER = groups(0xffff, G.PROP | G.RAGDOLL | G.DEBRIS | G.ENEMY);
 const COST_GRAB = 8, COST_ALIVE = 18, DRAIN = 6;
+const ASSIST_CONE = THREE.MathUtils.degToRad(10), ASSIST_RANGE = 40;
 
 interface Held { body: RAPIER.RigidBody; android?: Android; mass: number; prevGroups: number[]; offset: number }
 
@@ -17,6 +19,11 @@ export class KineticHand {
   held: Held[] = [];
   /** body handle → time thrown (for impact damage) */
   readonly thrown = new Map<number, { t: number; android?: Android; mass: number }>();
+  /**
+   * Velocity of each thrown body before this step's solve. Contact events arrive after the solver
+   * has already stopped the body against a (kinematic) android, so impact speed is read from here.
+   */
+  readonly preVel = new Map<number, THREE.Vector3>();
   private hum: ReturnType<Ctx['sfx']['hum']> | null = null;
   private beam: THREE.Mesh;
   private handLight: any = null;
@@ -52,6 +59,13 @@ export class KineticHand {
     const ctx = this.ctx, run = ctx.run;
     this.cool = Math.max(0, this.cool - dt);
     for (const [h, v] of this.thrown) if (ctx.time.simTime - v.t > 2.5) this.thrown.delete(h);
+    this.preVel.clear();
+    for (const h of this.thrown.keys()) {
+      const b = ctx.phys.world.getRigidBody(h);
+      if (!b || !ctx.phys.bodyAlive(b)) continue;
+      const v = b.linvel();
+      this.preVel.set(h, new THREE.Vector3(v.x, v.y, v.z));
+    }
     this.prune();
 
     if (input.pressed('Mouse2') && !this.holding && this.cool <= 0) this.tryGrab();
@@ -109,9 +123,22 @@ export class KineticHand {
       c.body.wakeUp();
       this.held.push({ body: c.body, android, mass: Math.max(1, mass), prevGroups: prev, offset: i });
     });
+    // the yank: snap everything toward the hand so a grab reads as a violent pull, not a float
+    this.held.forEach((h, i) => {
+      const t = h.body.translation(), hp = this.holdPoint(i);
+      const v = new THREE.Vector3(hp.x - t.x, hp.y - t.y, hp.z - t.z);
+      v.setLength(Math.min(14, v.length() * 6) / Math.sqrt(Math.max(1, h.mass / 20)));
+      const bodies = h.android ? h.android.body.segs.filter(s => !s.detached).map(s => s.body) : [h.body];
+      for (const b of bodies) b.setLinvel({ x: v.x, y: v.y, z: v.z }, true);
+      const p = new THREE.Vector3(t.x, t.y, t.z);
+      ctx.particles.sparksAt(p, v.clone().normalize(), 24, 0x19f0ff, 8, 0.9, 0.5);
+      ctx.particles.glowAt(p, 0x19f0ff, 1.1, 0.12);
+    });
+    ctx.time.hitstop(35);
     ctx.sfx.play('grab');
     this.hum = ctx.sfx.hum();
-    ctx.rig.fovKick += 2;
+    ctx.rig.addTrauma(0.12);
+    ctx.rig.fovKick += 3;
   }
 
   private holdPoint(i: number) {
@@ -155,9 +182,10 @@ export class KineticHand {
       const len = hand.distanceTo(tp);
       this.beam.visible = true;
       this.beam.position.copy(hand).add(tp).multiplyScalar(0.5);
-      this.beam.scale.set(1 + strain * 2, len, 1 + strain * 2);
+      const w = 1.8 + strain * 2.5 + Math.random() * 0.5; // crackle
+      this.beam.scale.set(w, len, w);
       this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tp.clone().sub(hand).normalize());
-      if (!this.handLight) this.handLight = ctx.lights.add({ pos: tp, color: new THREE.Color(0x19f0ff), intensity: 4, radius: 4 });
+      if (!this.handLight) this.handLight = ctx.lights.add({ pos: tp, color: new THREE.Color(0x19f0ff), intensity: 7, radius: 5 });
       this.handLight.pos.copy(tp);
       if (Math.random() < 0.4) ctx.particles.sparksAt(tp, new THREE.Vector3(0, 1, 0), 1, 0x19f0ff, 2, 1, 0.3);
     }
@@ -183,14 +211,27 @@ export class KineticHand {
     const ctx = this.ctx;
     const cam = ctx.camera;
     const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
-    // aim assist: throw toward what's under the crosshair
+    // aim assist: an android within a small cone of the crosshair wins (led by its velocity);
+    // otherwise throw toward whatever is under the crosshair
     const eye = cam.getWorldPosition(new THREE.Vector3());
+    const heldAndroids = new Set(this.held.map(h => h.android));
+    const cands: Android[] = (ctx.game?.enemies ?? []).filter((e: Android) => e.alive && !heldAndroids.has(e) && (e.visibility ?? 1) > 0.5);
+    const ti = pickAssistTarget(eye, fwd, cands.map(e => ({ pos: e.center })), ASSIST_CONE, ASSIST_RANGE);
+    const assist = ti >= 0 ? cands[ti] : undefined;
     let totalMass = 0;
     for (const h of this.held) {
-      const aimHit = ctx.phys.ray(eye.x, eye.y, eye.z, fwd.x, fwd.y, fwd.z, 80, groups(0xffff, G.STATIC | G.ENEMY), h.body);
       const t = h.body.translation();
-      const dir = aimHit ? new THREE.Vector3(aimHit.x - t.x, aimHit.y - t.y, aimHit.z - t.z).normalize() : fwd.clone();
-      const speed = THREE.MathUtils.clamp(40 / Math.sqrt(h.mass / 12), 14, 44) * ctx.run.mods.throwMul;
+      const speed = THREE.MathUtils.clamp(40 / Math.sqrt(h.mass / 12), 20, 44) * ctx.run.mods.throwMul;
+      let dir: THREE.Vector3;
+      if (assist) {
+        const aim = assist.center;
+        const flight = aim.distanceTo(new THREE.Vector3(t.x, t.y, t.z)) / speed;
+        aim.addScaledVector(assist.vel, flight);
+        dir = new THREE.Vector3(aim.x - t.x, aim.y - t.y, aim.z - t.z).normalize();
+      } else {
+        const aimHit = ctx.phys.ray(eye.x, eye.y, eye.z, fwd.x, fwd.y, fwd.z, 80, groups(0xffff, G.STATIC | G.ENEMY), h.body);
+        dir = aimHit ? new THREE.Vector3(aimHit.x - t.x, aimHit.y - t.y, aimHit.z - t.z).normalize() : fwd.clone();
+      }
       const v = dir.multiplyScalar(speed);
       if (h.android) { for (const s of h.android.body.segs) if (!s.detached) s.body.setLinvel({ x: v.x, y: v.y, z: v.z }, true); }
       else h.body.setLinvel({ x: v.x, y: v.y, z: v.z }, true);
@@ -203,8 +244,13 @@ export class KineticHand {
       totalMass += h.mass;
     }
     ctx.sfx.play('throw');
-    ctx.rig.addTrauma(0.15); ctx.rig.fovKick += 4;
-    ctx.rig.recoilPitch.kick(0.4);
+    const hand = new THREE.Vector3(-0.25, -0.25, -0.8).applyMatrix4(cam.matrixWorld);
+    ctx.particles.sparksAt(hand, fwd, 30, 0x19f0ff, 14, 0.6, 0.35);
+    ctx.particles.glowAt(hand, 0x19f0ff, 0.9, 0.1);
+    ctx.lights.flash(hand, 0x19f0ff, 18, 5, 0.12);
+    ctx.time.hitstop(40);
+    ctx.rig.addTrauma(0.3); ctx.rig.fovKick += 7;
+    ctx.rig.recoilPitch.kick(0.7);
     ctx.events.emit('kineticThrow', { mass: totalMass });
     this.held = [];
     this.endHold();

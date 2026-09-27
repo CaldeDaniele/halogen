@@ -26,6 +26,8 @@ export interface HitInfo {
   collider?: RAPIER.Collider;
   /** set by the receiver */
   headshot?: boolean;
+  /** damage actually applied after armor/shield/multipliers (set by the receiver) */
+  dealt?: number;
   pin?: boolean;
   /** hit came during bullet time */
   bulletTime?: boolean;

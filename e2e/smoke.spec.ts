@@ -184,3 +184,94 @@ test('frame rate cap limits rendered frames and is selectable in settings', asyn
   expect(capped).toBeGreaterThan(24);
   expect(uncapped).toBeGreaterThan(capped + 10);
 });
+
+test('kinetic throw is aim-assisted onto a nearby-off-crosshair android and slams it', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  await page.goto('/?seed=5');
+  await page.waitForFunction(() => (window as any).__halogen, null, { timeout: 60_000 });
+  const r = await page.evaluate(() => {
+    const g = (window as any).__halogen;
+    (window as any).__noLockPrompt = true;
+    g.renderer.setQuality('low'); g.menus.hide(); g.newRun(5); g.director = null; g.advance(0.2);
+    const V = g.player.pos.constructor;
+    for (const e of [...g.enemies]) g.disposeAndroid(e);
+    g.enemies = [];
+    g.player.teleport(new V(0, 0, 1), 0); // clear lane in the seed-5 arena
+    const held = g.spawnEnemy('grunt', new V(0, 0, -1.4), false);
+    const target = g.spawnEnemy('grunt', new V(1.3, 0, -9), false);
+    held.ai = null; target.ai = null; // stand still: this test is about the throw, not AI
+    g.advance(0.2);
+    g.run.lumen = g.run.maxLumen;
+    const aimAt = (c: any) => { const p = g.player, e = p.eye; const dx = c.x - e.x, dy = c.y - e.y, dz = c.z - e.z; p.yaw = Math.atan2(-dx, -dz); p.pitch = Math.atan2(dy, Math.hypot(dx, dz)); };
+    aimAt(held.center);
+    g.input.pressedQ.add('Mouse2');
+    g.advance(0.4, { keys: ['Mouse2'] });
+    const grabbed = g.kinetic.holding;
+    g.player.yaw = 0; g.player.pitch = -0.03; // crosshair ~7° left of the target
+    let kineticHits = 0;
+    g.events.on('enemyHit', (e: any) => { if (e.enemy === target && e.hit.source === 'kinetic') kineticHits++; });
+    for (let i = 0; i < 15 && kineticHits === 0; i++) { g.run.hp = g.run.maxHp; g.advance(0.1); }
+    return { grabbed, kineticHits, targetHp: target.hp, max: target.maxHp };
+  });
+  expect(errors).toEqual([]);
+  expect(r.grabbed).toBe(true);
+  expect(r.kineticHits, 'thrown android should connect with the assisted target').toBeGreaterThan(0);
+});
+
+test('hits show merged damage numbers and an HP bar; the setting turns them off', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  await page.goto('/?seed=5');
+  await page.waitForFunction(() => (window as any).__halogen, null, { timeout: 60_000 });
+  const r = await page.evaluate(() => {
+    const g = (window as any).__halogen;
+    (window as any).__noLockPrompt = true;
+    g.renderer.setQuality('low'); g.menus.hide(); g.newRun(5); g.director = null; g.advance(0.2);
+    const V = g.player.pos.constructor;
+    for (const e of [...g.enemies]) g.disposeAndroid(e);
+    g.enemies = [];
+    g.player.teleport(new V(0, 0, 1), 0); // clear lane in the seed-5 arena
+    const a = g.spawnEnemy('charger', new V(0, 0, -4), false);
+    a.ai = null;
+    g.advance(0.2);
+    const hit = (dmg: number) => a.hit({ point: a.center, normal: new V(0, 0, 1), dir: new V(0, 0, -1), damage: dmg, impulse: 2, source: 'player', weapon: 'arc' }, a.body.seg('pelvis'));
+    hit(20); hit(20); g.advance(0.05);
+    const nums = [...document.querySelectorAll('.dmgnum')].map(n => n.textContent);
+    const bar = document.querySelector('.ehp') as HTMLElement | null;
+    const barVisible = !!bar && parseFloat(bar.style.opacity) > 0.5;
+    g.combatText.enabled = false;
+    hit(20); g.advance(0.05);
+    const numsAfter = document.querySelectorAll('.dmgnum').length;
+    return { nums, barVisible, numsAfter };
+  });
+  expect(errors).toEqual([]);
+  expect(r.nums).toEqual(['40']);
+  expect(r.barVisible).toBe(true);
+  expect(r.numsAfter).toBe(1); // no new number while disabled (the old one is still fading)
+});
+
+test('skitters are forgiving to shoot: a shot skimming their back still lands', async ({ page }) => {
+  await page.goto('/?seed=5');
+  await page.waitForFunction(() => (window as any).__halogen, null, { timeout: 60_000 });
+  const r = await page.evaluate(() => {
+    const g = (window as any).__halogen;
+    (window as any).__noLockPrompt = true;
+    g.renderer.setQuality('low'); g.menus.hide(); g.newRun(5); g.director = null; g.advance(0.2);
+    const V = g.player.pos.constructor;
+    for (const e of [...g.enemies]) g.disposeAndroid(e);
+    g.enemies = [];
+    g.player.teleport(new V(0, 0, 1), 0); // clear lane in the seed-5 arena
+    const s = g.spawnEnemy('skitter', new V(0, 0, -4), false);
+    s.ai = null;
+    g.advance(0.2);
+    let hits = 0;
+    g.events.on('enemyHit', (e: any) => { if (e.enemy === s) hits++; });
+    const e = g.player.eye, c = s.center.clone(); c.y += 0.36; // above the carapace
+    const dx = c.x - e.x, dy = c.y - e.y, dz = c.z - e.z;
+    g.player.yaw = Math.atan2(-dx, -dz); g.player.pitch = Math.atan2(dy, Math.hypot(dx, dz));
+    g.advance(0.05, { fire: true });
+    return { hits };
+  });
+  expect(r.hits).toBe(1);
+});

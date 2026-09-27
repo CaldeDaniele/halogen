@@ -33,6 +33,7 @@ import type { EnemyType } from './enemies/defs';
 import { Bolts } from './bolts';
 import { Pickups } from './pickups';
 import { Hud } from '../ui/hud';
+import { CombatText } from '../ui/combattext';
 import { pickCard } from '../ui/cards';
 import { explode } from './combat';
 import type { Seg } from '../physics/ragdoll';
@@ -72,6 +73,7 @@ export class Game {
   bolts!: Bolts;
   pickups!: Pickups;
   hud!: Hud;
+  combatText!: CombatText;
   menus!: Menus;
   dev!: DevOverlay;
   ctx!: Ctx;
@@ -121,6 +123,7 @@ export class Game {
     g.particles = new Particles(g.renderer.scene);
     g.decals = new Decals(g.renderer.scene);
     g.hud = new Hud(ui);
+    g.combatText = new CombatText(ui);
     g.hud.show(false);
     progress(0.6, 'systems');
     g.player = new PlayerController(g.phys, new THREE.Vector3(0, 0, 0));
@@ -227,7 +230,7 @@ export class Game {
     this.corpses.clear();
     this.enemies = [];
     this.boss?.dispose(); this.boss = null;
-    this.bolts.clear(); this.pickups.clear(); this.debris.clear(); this.weapons.clear(); this.kinetic.drop();
+    this.bolts.clear(); this.pickups.clear(); this.debris.clear(); this.weapons.clear(); this.kinetic.drop(); this.combatText.clear();
     for (const p of this.pins) if (p.body) this.phys.removeBody(p.body);
     this.pins = [];
     for (const b of this.beams) b.mesh.removeFromParent();
@@ -373,8 +376,12 @@ export class Game {
   private wireEvents() {
     const ev = this.events;
     ev.on('enemyHit', ({ hit, enemy }) => {
-      if (hit.source === 'player' || hit.source === 'kinetic') this.hud.hitmarker(hit.headshot ? 'head' : 'hit');
-      if (hit.source === 'player' || hit.source === 'kinetic') this.sfx.play(hit.headshot ? 'headshot' : 'hit');
+      if (hit.source === 'player' || hit.source === 'kinetic') {
+        const dealt = hit.dealt ?? hit.damage;
+        this.hud.hitmarker(hit.headshot ? 'head' : 'hit');
+        this.sfx.play(hit.headshot ? 'headshot' : 'hit', { gain: 0.6 + dealt / 40 });
+        if (hit.weapon !== 'thermite') this.combatText.hit(enemy, dealt, !!hit.headshot, hit.point, performance.now() / 1000);
+      }
       // arc chain
       if (this.run.mods.chain > 0 && hit.source === 'player' && hit.weapon !== 'explosion' && !hit.tags?.has('chain')) {
         const others = this.enemies.filter(e => e !== enemy && e.alive && e.center.distanceTo(hit.point) < 9)
@@ -393,6 +400,7 @@ export class Game {
       if (kinetic) run.kineticKills++;
       this.hud.hitmarker(headshot ? 'head' : 'kill');
       this.sfx.play('kill');
+      this.combatText.kill(enemy, performance.now() / 1000);
       this.director?.onKill();
       const now = this.time.realTime;
       this.killTimes.push(now);
@@ -426,7 +434,7 @@ export class Game {
       if (kinetic && run.mods.siphon) run.heal(run.mods.siphon);
       if (run.mods.adrenal) run.shield = Math.min(50, run.shield + 10);
       if (run.mods.volatile && enemy instanceof Android) this.later(0.55, () => explode(this.ctx, enemy.center, 4.2, 60, 22, 'player', 0xff5a1a, new Set(['volatile'])));
-      if (Math.random() < (run.mods.scavenger ? 0.4 : 0.18) || run.hp < run.maxHp * 0.3 && Math.random() < 0.4) this.pickups.spawn(pos, 'health');
+      if (Math.random() < (run.mods.scavenger ? 0.4 : 0.25) || run.hp < run.maxHp * 0.3 && Math.random() < 0.4) this.pickups.spawn(pos, 'health');
       if (Math.random() < 0.15) this.pickups.spawn(pos, 'lumen');
       // hit-stop + juice scale with kill quality
       this.time.hitstop(headshot || kinetic ? 55 : 30);
@@ -819,6 +827,7 @@ export class Game {
         enemies: this.enemies.filter(e => e.alive).length, room: this.node ? `${SECTOR_NAMES[this.run.sector]} · ${ROOM_LABEL[this.node.type]}` : '',
         bulletTime: this.time.isBulletTime, inLight: this.inLight, holding: this.kinetic.holding,
       }, realDt);
+      this.combatText.update(cam, performance.now() / 1000);
     }
     this.hud.setPrompt(this.mode === 'play' && !this.input.locked && !(window as any).__noLockPrompt ? 'CLICK TO ENGAGE' : null);
     this.hud.boss(this.boss && !this.boss.dead && this.mode !== 'title' ? this.boss.name : null, this.boss ? this.boss.hp / this.boss.maxHp : 0, this.boss?.state ?? '');
@@ -904,7 +913,9 @@ export class Game {
         if (!ba) continue;
         const rec = this.kinetic.thrown.get(ba.handle);
         const ownerB = this.phys.ownerOf(hb) as Owner | undefined;
-        const v = ba.linvel();
+        let v: { x: number; y: number; z: number } = ba.linvel();
+        const pre = rec && this.kinetic.preVel.get(ba.handle);
+        if (pre && pre.lengthSq() > v.x * v.x + v.y * v.y + v.z * v.z) v = pre; // impact speed, not post-solve speed
         const speed = Math.hypot(v.x, v.y, v.z);
         if (rec && speed > 5) {
           const key = ba.handle * 100000 + hb;
@@ -918,7 +929,7 @@ export class Game {
             target.hit({ point, normal: new THREE.Vector3(0, 1, 0), dir: new THREE.Vector3(v.x, v.y, v.z).normalize(), damage: dmg, impulse: speed * 0.8, source: 'kinetic', weapon: 'kinetic' }, ownerB!.seg);
             if (target.state === 'alive' && !target.isBoss) target.stagger(undefined, undefined, 1.3);
             this.sfx.play('thud', { pos: point, gain: 1.5 });
-            this.rig.addTrauma(0.12);
+            if (!(rec as any).slammed) { (rec as any).slammed = true; this.kineticSlam(point, new THREE.Vector3(v.x, v.y, v.z).normalize(), rec.mass, speed, target, rec.android); }
           } else if (ownerB?.kind === 'boss') {
             ownerB.hit?.({ point, normal: new THREE.Vector3(0, 1, 0), dir: new THREE.Vector3(v.x, v.y, v.z).normalize(), damage: THREE.MathUtils.clamp(0.5 * Math.min(rec.mass, 120) * speed * speed * 0.02, 20, 300), impulse: speed * 0.5, source: 'kinetic', weapon: 'kinetic' });
             this.sfx.play('thud', { pos: point, gain: 1.5 }); this.rig.addTrauma(0.15);
@@ -958,6 +969,33 @@ export class Game {
         if (Math.hypot(v.x, v.y, v.z) > 6) o.hit?.({ point: o.fixture.pos, normal: new THREE.Vector3(), dir: new THREE.Vector3(), damage: 99, impulse: 0, source: 'kinetic' });
       }
     });
+  }
+
+  /**
+   * A thrown body connecting with an android: the big "that landed" beat. Hit-stop, flash, sparks,
+   * and a short-range slam that shoves and staggers anything standing next to the victim.
+   */
+  private kineticSlam(p: THREE.Vector3, dir: THREE.Vector3, mass: number, speed: number, direct: Android, thrown?: Android) {
+    this.time.hitstop(70);
+    this.hud.impactFlash();
+    this.renderer.caPulse = Math.min(1, this.renderer.caPulse + 0.35);
+    this.rig.addTrauma(0.28);
+    this.particles.sparksAt(p, dir.clone().negate().setY(0.6).normalize(), 40, 0x9ff6ff, 11, 1.1, 0.6);
+    this.particles.glowAt(p, 0x19f0ff, 1.6, 0.14);
+    this.renderer.lights.flash(p, 0x19f0ff, 26, 6, 0.18);
+    this.sfx.play('impactMetal', { pos: p, gain: 1.8 });
+    // collect first, act after (Rapier query rule)
+    const near = new Set<Android>();
+    for (const col of this.phys.overlapBall(p, 2.6)) {
+      const a = (this.phys.ownerOf(col.handle) as Owner | undefined)?.android as Android | undefined;
+      if (a && a !== direct && a !== thrown && a.state === 'alive' && !a.isBoss) near.add(a);
+    }
+    const dmg = THREE.MathUtils.clamp(mass * speed * 0.25, 15, 80);
+    for (const a of near) {
+      const d = a.center.sub(p).setY(0.4).normalize();
+      a.hit({ point: a.center, normal: d.clone().negate(), dir: d, damage: dmg, impulse: speed * 0.5, source: 'kinetic', weapon: 'kinetic' }, a.body.root);
+      if (a.state === 'alive') a.stagger(undefined, undefined, 1.1);
+    }
   }
 
   private vortex(p: THREE.Vector3) {

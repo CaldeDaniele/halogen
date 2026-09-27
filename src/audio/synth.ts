@@ -247,10 +247,20 @@ export class Sfx {
         this.ring(o, t, 0.4, 1800, 0.6, [1, 2.01, 3.03]);
         break;
       }
-      case 'hit': { if (!this.allow(name, 0.03)) return; const o = this.out(undefined, 0.25, 0); this.tone(o, t, 0.04, 'sine', 2800, 2600, 0.6); break; }
-      case 'kill': {
-        const o = this.out(undefined, 0.3, 0.2);
-        this.tone(o, t, 0.08, 'sine', 1400, 1400, 0.5); this.tone(o, t + 0.07, 0.18, 'sine', 2100, 2100, 0.5);
+      case 'hit': { // confirm: bright tick + crunchy click + a little body, heavier hits (gain) get more thump
+        if (!this.allow(name, 0.03)) return;
+        const k = Math.min(1.6, opts?.gain ?? 1);
+        const o = this.out(undefined, 0.34, 0);
+        this.tone(o, t, 0.045, 'sine', 3000, 2500, 0.6);
+        this.noise(o, t, 0.035, 'bandpass', 4200, 2600, 2, 0.55);
+        this.tone(o, t, 0.07, 'triangle', 240 * r(0.9, 1.1), 110, 0.35 * k, 0.001);
+        break;
+      }
+      case 'kill': { // two-note confirm over a low crunch
+        const o = this.out(undefined, 0.42, 0.25);
+        this.noise(o, t, 0.09, 'lowpass', 1800, 300, 1, 0.8, 0.001);
+        this.tone(o, t, 0.16, 'sine', 140, 45, 0.8, 0.002);
+        this.tone(o, t, 0.08, 'sine', 1400, 1400, 0.45); this.tone(o, t + 0.07, 0.2, 'sine', 2100, 2100, 0.45);
         break;
       }
       case 'thud': {
@@ -310,9 +320,11 @@ export class Sfx {
         this.noise(o, t, 0.6, 'bandpass', 2400, 900, 2, 0.5, 0.02);
         break;
       }
-      case 'grab': {
-        const o = this.out(undefined, 0.4, 0.2);
-        this.tone(o, t, 0.25, 'sawtooth', 200, 600, 0.3, 0.01);
+      case 'grab': { // yank: low thump + rising zap
+        const o = this.out(undefined, 0.55, 0.25);
+        this.tone(o, t, 0.14, 'sine', 120, 50, 0.8, 0.002);
+        this.noise(o, t, 0.06, 'highpass', 2500, 5000, 1, 0.5);
+        this.tone(o, t, 0.25, 'sawtooth', 200, 700, 0.3, 0.01);
         this.noise(o, t, 0.2, 'bandpass', 1200, 3000, 3, 0.3, 0.02);
         break;
       }
