@@ -46,6 +46,7 @@ type Mode = 'title' | 'play' | 'cards' | 'transition' | 'dead' | 'paused' | 'vic
 const REWARD_LABEL: Record<string, string> = { card: 'UPGRADE', rare: 'RARE UPGRADE', heal: 'REPAIR', weapon: 'ARMORY', lumen: 'LUMEN CACHE', none: '' };
 const ROOM_LABEL: Record<string, string> = { arena: 'ARENA', gauntlet: 'GAUNTLET', shaft: 'SHAFT', dark: 'DARK ZONE', boss: 'OVERSEER', rest: 'SANCTUM', elite: 'ELITE' };
 const SECTOR_NAMES = ['FOUNDRY', 'GRID', 'FILAMENT'];
+const SECTOR_TAGS = ['Where the androids were cast. The racks are no longer empty.', "The arcology's power plant. Someone is still flipping switches.", 'Light grew here until it learned to want.'];
 const GRADES = [
   { hue: -0.02, sat: 0.05, contrast: 0.1, bright: 0, fog: 0x010204, ext: 0.008, dens: 0.7 },
   { hue: 0.02, sat: 0.08, contrast: 0.12, bright: 0.01, fog: 0x040201, ext: 0.01, dens: 0.85 },
@@ -204,6 +205,7 @@ export class Game {
     if (node.type === 'boss') { this.boss = createBoss(this.ctx, sector, this.room!, (t, p) => this.spawnEnemy(t, p, true)); this.music.single(`s${sector + 1}_boss`, 0.95); }
     else { this.boss = null; this.music.sector(sector); }
     if (node.type === 'rest') this.later(0.8, () => this.restRoom());
+    if (node.layer === 0) this.menus.sectorSplash(sector, SECTOR_NAMES[sector], SECTOR_TAGS[sector]);
     this.room!.entryDoor.target = 0;
   }
 

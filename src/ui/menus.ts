@@ -81,9 +81,32 @@ export class Menus {
     );
   }
 
+  sectorSplash(i: number, name: string, tag: string) {
+    const d = document.createElement('div');
+    d.className = 'splash';
+    d.innerHTML = `<div class="sp-art" style="background-image:url(assets/art/sector${i + 1}.webp)"></div><div class="sp-txt"><div class="sp-n">SECTOR 0${i + 1}</div><div class="sp-name">${name}</div><div class="sp-tag">${tag}</div></div>`;
+    this.ui.appendChild(d);
+    setTimeout(() => d.classList.add('out'), 2600);
+    setTimeout(() => d.remove(), 3400);
+  }
+
+  private mapSvg() {
+    const g = this.game;
+    const map = g.maps?.[g.run.sector];
+    if (!map || !g.node) return '';
+    const W = 520, H = 120, L = map.layers.length;
+    const pos = new Map<number, [number, number]>();
+    map.layers.forEach((ids: number[], li: number) => ids.forEach((id, k) => pos.set(id, [30 + (li / (L - 1)) * (W - 60), H / 2 + (k - (ids.length - 1) / 2) * 38])));
+    const icon: Record<string, string> = { arena: '◆', gauntlet: '▮', shaft: '▲', dark: '●', boss: '✖', rest: '✚', elite: '★' };
+    let svg = `<svg class="rmap" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`;
+    for (const n of map.nodes) for (const e of n.next) { const a = pos.get(n.id)!, b = pos.get(e)!; svg += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${n.id === g.node.id ? 'hot' : ''}"/>`; }
+    for (const n of map.nodes) { const [x, y] = pos.get(n.id)!; const cur = n.id === g.node.id; const done = n.layer < g.node.layer; svg += `<g class="nd ${cur ? 'cur' : done ? 'done' : ''}"><circle cx="${x}" cy="${y}" r="13"/><text x="${x}" y="${y + 5}">${icon[n.type] ?? '?'}</text></g>`; }
+    return svg + '</svg>';
+  }
+
   showPause() {
     this.el.className = 'menu pause interactive';
-    this.el.innerHTML = `<div class="p-box"><div class="p-title">PAUSED</div><div class="p-btns"></div><div class="p-stats">${this.runLine()}</div></div>`;
+    this.el.innerHTML = `<div class="p-box"><div class="p-title">PAUSED</div>${this.mapSvg()}<div class="p-btns"></div><div class="p-stats">${this.runLine()}</div></div>`;
     this.el.querySelector('.p-btns')!.append(
       this.btn('RESUME', () => this.game.pause(false), 'primary'),
       this.btn('SETTINGS', () => this.showSettings(() => this.showPause())),

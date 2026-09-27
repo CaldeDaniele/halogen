@@ -182,3 +182,16 @@ kbd { font-family: var(--mono); font-size: 11px; border: 1px solid rgba(255, 255
 .hud-boss .bbar { height: 6px; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 59, 59, .3); }
 .hud-boss .bfill { height: 100%; background: linear-gradient(90deg, #ff3b3b, #ff8a3b); transform-origin: left; transition: transform .2s; box-shadow: 0 0 12px rgba(255, 59, 59, .6); }
 .hud-boss.shield .bfill { background: linear-gradient(90deg, #ffb02e, #fff1b0); }
+.splash { position: absolute; inset: 0; z-index: 25; display: flex; align-items: flex-end; pointer-events: none; animation: fadein .5s; transition: opacity .8s; }
+.splash.out { opacity: 0; }
+.splash .sp-art { position: absolute; inset: 0; background-size: cover; background-position: center; mask-image: linear-gradient(transparent 0%, #000 30%, #000 60%, transparent 100%); opacity: .85; animation: drift 6s ease-out forwards; }
+.splash .sp-txt { position: relative; padding: 0 8vw 14vh; }
+.sp-n { font-family: var(--mono); font-size: 13px; letter-spacing: .5em; color: var(--dim); }
+.sp-name { font-size: clamp(48px, 7vw, 110px); font-weight: 700; letter-spacing: .25em; text-shadow: 0 0 30px rgba(255, 255, 255, .35); }
+.sp-tag { font-size: 16px; color: #c9d6dc; letter-spacing: .05em; margin-top: 6px; }
+.rmap { display: block; margin: 0 0 18px; max-width: 100%; }
+.rmap line { stroke: rgba(255, 255, 255, .15); stroke-width: 2; } .rmap line.hot { stroke: var(--cyan); }
+.rmap .nd circle { fill: #0a0e12; stroke: rgba(255, 255, 255, .25); stroke-width: 1.5; }
+.rmap .nd text { fill: var(--dim); font-size: 12px; text-anchor: middle; font-family: var(--font); }
+.rmap .nd.cur circle { stroke: var(--cyan); fill: rgba(25, 240, 255, .15); } .rmap .nd.cur text { fill: #fff; }
+.rmap .nd.done circle { fill: rgba(255, 255, 255, .06); }
