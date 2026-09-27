@@ -8,7 +8,10 @@ prioritized backlog. Read it fully before changing code.
 - Design spec (binding): [`docs/superpowers/specs/2026-09-27-halogen-design.md`](superpowers/specs/2026-09-27-halogen-design.md)
 - Round-1 plan (history): [`docs/superpowers/plans/2026-09-27-halogen.md`](superpowers/plans/2026-09-27-halogen.md)
 - Public-facing overview: [`README.md`](../README.md)
-- Branch: `halogen` (base `main`, not merged yet, no git remote configured)
+- Branch: `halogen` (base `main`, not merged). Remote `origin` = <https://github.com/CaldeDaniele/halogen> (public, default branch `halogen`)
+- Live build: <https://caldedaniele.github.io/halogen/>. `.github/workflows/pages.yml` runs unit tests + build and deploys on every push to `halogen`.
+  Pushing workflow files needs the `workflow` scope: the machine's stored git PAT lacks it, so push with
+  `git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin HEAD:halogen` (gh's token has it).
 
 ---
 
@@ -20,15 +23,20 @@ prioritized backlog. Read it fully before changing code.
 FPS cap), dev overlay (F1–F4), `?seed=` and `?bench`.
 
 **Quality gates (all green at handoff):**
-- `npm test` → 119 unit tests (vitest)
-- `npm run test:e2e` → 6 Playwright tests (system Edge channel, no browser download)
+- `npm test` → 131 unit tests (vitest)
+- `npm run test:e2e` → 9 Playwright tests (system Edge channel, no browser download)
 - `npx tsc --noEmit` clean, `npm run build` OK
 
 **Measured performance:** typical combat Ultra 1600×900 ≈ 127 fps (headless Edge, GPU); worst case
 `?bench` (40 ragdolls, 200 debris, 128 lights) p50 16.4 ms at 1080p — **CPU-bound** (draw calls + physics).
 
-**Playtest status:** the owner says it "works well for a first pass". No detailed balance feedback yet —
-ask the owner before large balance changes (see §5, item B1).
+**Playtest status (round 2):** owner feedback was: hit feedback "strange, almost nonexistent", Skitters
+hard to hit, kinetic hand not impactful, overall too hard. Round 2 shipped a first pass for all four
+(see README "Difficulty curve" / "Game feel"): damage numbers + HP bars (toggle in Settings), layered hit
+SFX, bigger popping hitmarker, stronger flinch/knockback/punch, micro hit-stop on scatter/rail, Skitter
+sensor hurtbox (`EnemyStats.hurtbox`) + slower + longer tells, kinetic yank/aim-assist/impact slam,
+enemy damage −20–30%, director budget `10 + 2·depth + 7·sector`. **Awaiting the owner's re-playtest** before
+further tuning.
 
 ---
 
@@ -84,6 +92,11 @@ agent-driven testing use the deterministic harness (§4.3) instead of real input
 3. Collision groups are `groups(member, filter)` from `src/physics/world.ts` (`G.*` bits). Live android
    segments = `ENEMY`, ragdolls = `RAGDOLL`, shades in darkness become `TRIGGER` (bullets pass).
 4. Hitboxes are intentionally larger than visuals (capsule radius ×1.35, boxes ×1.1 in `ragdoll.ts`).
+5. Contact-force events fire **after** the solve: a body that hit a kinematic android already reads ~0
+   velocity. Impact speed of thrown bodies comes from `KineticHand.preVel` (recorded before `phys.step`).
+6. Ray casts and shape queries include **sensors** unless `QueryFilterFlags.EXCLUDE_SENSORS` is passed.
+   The Skitter hurtbox (`ArticulatedBody.addHurtbox`) relies on this; both KCCs pass the flag so it never
+   blocks movement. Hitscan pierce is counted per android, so a hurtbox + segment can't double-hit.
 
 ### 4.2 Game-flow rules
 
@@ -138,7 +151,7 @@ Legend: **P1** do first · **P2** next · **P3** nice to have. Each item lists w
 
 | ID | Pri | Item | Where | Done when |
 |---|---|---|---|---|
-| B1 | P1 | **Balance pass from playtest** — ask the owner what felt too easy/hard first | `defs.ts` (hp/dmg/fireRate), `director.ts` (budgets), `bosses.ts` (hp/timers), `cards.ts` (weights) | owner confirms; add a "difficulty curve" note in README. Known data point: a standing player dies in ~5 s to 9 mixed enemies |
+| B1 | P1 | ~~Balance pass from playtest~~ **first pass done (round 2)**; re-tune after the owner's next playtest | `defs.ts` (hp/dmg/fireRate), `director.ts` (budgets), `bosses.ts` (hp/timers), `cards.ts` (weights) | owner confirms; add a "difficulty curve" note in README. Known data point: a standing player dies in ~5 s to 9 mixed enemies |
 | B2 | P2 | **Onboarding room** (kinetic hand + light-as-resource + dash) before sector 1 | `runmap.ts` (layer −1 node), `generator.ts` new `tutorial` type, HUD prompts | first-run only (meta flag), skippable, teaches RMB grab/throw, shooting a light for Lumen, Shade in darkness |
 | B3 | P2 | **Elite affixes** (e.g. *Shielded*, *Volatile*, *Blinking*, *Magnetic*) | `android.ts`, `director.ts`, `ai.ts` | elites appear from room depth ≥3, visible affix tell (emissive pattern + HUD tag), unit tests for affix assignment determinism |
 | B4 | P2 | **More room modules / layout variety** (catwalks, two-level arenas, destructible walls) | `generator.ts`, `builder.ts` | reachability tests still cover every new type; 40-seed test extended |
@@ -161,7 +174,7 @@ Legend: **P1** do first · **P2** next · **P3** nice to have. Each item lists w
 
 | ID | Pri | Item | Where | Done when |
 |---|---|---|---|---|
-| D1 | P1 | **Public deploy** (GitHub Pages or Netlify) → a link for the CV | needs a git remote — **ask the owner** which host/account; `vite.config.ts` already uses `base: './'` | live URL loads, music lazy-loads, `?seed=` links work; URL added to README |
+| D1 | P1 | ~~Public deploy~~ **done**: <https://caldedaniele.github.io/halogen/> (GitHub Pages via Actions) | needs a git remote — **ask the owner** which host/account; `vite.config.ts` already uses `base: './'` | live URL loads, music lazy-loads, `?seed=` links work; URL added to README |
 | D2 | P1 | **Trailer (30–60 s)** | a video-generation tool (Motion) may be available in the owner's session; otherwise capture via Playwright + ffmpeg (`C:\ffmpeg\bin\ffmpeg` exists on the owner's machine) | trailer showing: dash → kinetic yank → ragdoll through a light → bullet-time → boss; linked in README |
 | D3 | P2 | GIFs in README (spec asked for GIFs, round 1 has stills) | `e2e/shots.spec.ts` (extend to record frames) + ffmpeg | 3–4 short loops: kinetic throw, light break → Shade reveal, Filament tendril tear, dev overlay |
 | D4 | P3 | itch.io page (HTML5 upload of `dist/`) | `npm run build` | page live with screenshots + controls |

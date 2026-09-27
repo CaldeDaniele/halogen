@@ -14,6 +14,8 @@ concrete, and fight over the light itself.
 
 ## Play
 
+**Live build: <https://caldedaniele.github.io/halogen/>** (desktop, keyboard + mouse; `?seed=123` works there too).
+
 ```bash
 npm install
 npm run dev          # http://localhost:5173
@@ -63,6 +65,15 @@ bosses:
 
 Meta-progression is unlocks only (6 cards earned across runs), no stat grind.
 
+**Difficulty curve.** The director spends a point budget per room (grunt 2, skitter 1, shade/lamplighter 3,
+charger 4): `10 + 2·depth + 7·sector`, ×1.5 in elite rooms, so the opening room is a 10-point warm-up and a
+late sector-3 elite tops out at 51 (it was 61 before the first playtest). Waves release as the field thins
+out and are held back 3–7 s while the player is under stress. Every attack has a wind-up tell (0.35–0.65 s)
+and enemy bolts are slow enough to strafe. Tuning after playtest feedback ("too hard", "Skitters are hard
+to hit") lowered enemy damage by 20–30%, slowed Skitters and gave them a forgiving hurtbox. A standing
+player now survives about 5.7 s against nine mixed enemies spawned in a ring (4.6 s before). Unit tests
+pin the budget curve ([`director.test.ts`](tests/director.test.ts)).
+
 ## Engineering highlights
 
 **Clustered forward lighting.** Three.js's standard forward renderer tops out around a dozen lights.
@@ -110,7 +121,12 @@ with a generated convolution reverb sized to the room. Bullet-time lowpasses and
 
 **Game feel.** A fixed 120 Hz simulation with interpolated rendering. Bullet-time scales simulation dt,
 never mouse look. Also: hit-stop, trauma-based shake, FOV kicks, recoil springs (sub-stepped so a
-throttled tab can't explode them), impact frames, and a style meter that rewards variety.
+throttled tab can't explode them), impact frames, and a style meter that rewards variety. Every hit
+confirms on four channels at once: a popping hitmarker, a layered confirm sound weighted by damage, a
+white flash + scale punch + flinch on the struck part, and a floating damage number that merges rapid
+hits per enemy (HP bars appear over anything you've damaged; both can be turned off in Settings). The
+kinetic hand *yanks* on grab (hit-stop, sparks), throws with a 10° aim assist that leads moving targets,
+and a connecting throw slams: 70 ms hit-stop, flash, and a 2.6 m shove that staggers bystanders.
 
 **Procedural levels.** A seeded grid generator ([`generator.ts`](src/game/level/generator.ts)) builds arenas,
 gauntlets, vertical shafts with ramped platforms, dark zones, sanctums and boss halls. It rejects any
@@ -143,10 +159,12 @@ above 21 ms for 4 s.
 ## Tests
 
 ```bash
-npm test             # 109 unit tests (vitest): rng, loop, time, budget, events, input, clustering,
-                     #   generator reachability, run map, cards/synergies/unlocks, fracture, defs, springs
+npm test             # 131 unit tests (vitest): rng, loop, time, budget, events, input, clustering,
+                     #   generator reachability, run map, cards/synergies/unlocks, fracture, defs, springs,
+                     #   director budgets, damage-number merging, throw aim assist, hurtboxes
 npm run test:e2e     # Playwright (system Edge): boots a seed, runs a scripted bot for 10 s of combat,
-                     #   clears the room, asserts zero console errors; settings persistence
+                     #   clears the room, asserts zero console errors; settings persistence; kinetic
+                     #   throw assist; damage numbers/HP bars; Skitter hurtbox
 BENCH=1 npx playwright test e2e/bench.spec.ts   # perf harness
 SHOTS=1 npx playwright test e2e/shots.spec.ts   # regenerates the screenshots above
 ```
