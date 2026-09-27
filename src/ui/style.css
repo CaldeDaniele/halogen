@@ -3,6 +3,8 @@
   --magenta: #ff2bd6;
   --amber: #ffb02e;
   --red: #ff3b3b;
+  /* telegraph palette (remapped by the colorblind setting) */
+  --hurt: #ff3b3b; --kill: #ff3b3b; --head: #ffb02e;
   --ink: #e8f4f8;
   --dim: #7d8b93;
   --bg: #040507;
@@ -51,10 +53,10 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .hud-hit i:nth-child(1) { top: 0 } .hud-hit i:nth-child(2) { bottom: 0 }
 .hud-hit i:nth-child(3) { width: 13px; height: 3px; left: 0; top: 20.5px } .hud-hit i:nth-child(4) { width: 13px; height: 3px; right: 0; left: auto; top: 20.5px }
 .hud-hit.kill { width: 56px; height: 56px; }
-.hud-hit.kill i { background: var(--red); box-shadow: 0 0 10px var(--red); left: 26.5px; height: 17px; }
+.hud-hit.kill i { background: var(--kill); box-shadow: 0 0 10px var(--kill); left: 26.5px; height: 17px; }
 .hud-hit.kill i:nth-child(3), .hud-hit.kill i:nth-child(4) { width: 17px; height: 3px; left: 0; top: 26.5px; }
 .hud-hit.kill i:nth-child(4) { left: auto; right: 0; }
-.hud-hit.head i { background: var(--amber); box-shadow: 0 0 10px var(--amber); height: 16px; }
+.hud-hit.head i { background: var(--head); box-shadow: 0 0 10px var(--head); height: 16px; }
 .hud-hit.head i:nth-child(3), .hud-hit.head i:nth-child(4) { width: 16px; height: 3px; }
 /* combat text: damage numbers + enemy HP bars */
 .ctext { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
@@ -63,21 +65,21 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 .dmgnum span { display: inline-block; }
 .dmgnum span.bump { animation: numpop .18s ease-out; }
 @keyframes numpop { from { transform: scale(1.6); } to { transform: scale(1); } }
-.dmgnum.head { color: var(--amber); font-size: 21px; text-shadow: 0 0 2px #000, 0 1px 3px #000, 0 0 12px rgba(255, 176, 46, .7); }
-.dmgnum.kill { color: var(--red); font-size: 23px; text-shadow: 0 0 2px #000, 0 1px 3px #000, 0 0 14px rgba(255, 59, 59, .8); }
+.dmgnum.head { color: var(--head); font-size: 21px; text-shadow: 0 0 2px #000, 0 1px 3px #000, 0 0 12px color-mix(in srgb, var(--head) 70%, transparent); }
+.dmgnum.kill { color: var(--kill); font-size: 23px; text-shadow: 0 0 2px #000, 0 1px 3px #000, 0 0 14px color-mix(in srgb, var(--kill) 80%, transparent); }
 .ehp { position: absolute; left: 0; top: 0; width: 46px; height: 4px; background: rgba(0, 0, 0, .55); outline: 1px solid rgba(255, 255, 255, .18); will-change: transform, opacity; }
 .ehp b { position: absolute; inset: 0; background: #e8f4f8; transform-origin: left; transition: transform .12s; }
 .ehp .sh { position: absolute; inset: 0; background: var(--amber); opacity: .85; transform-origin: left; transform: scaleX(0); }
 .hud-dmgdirs { position: absolute; left: 50%; top: 50%; }
-.dmgdir { position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%; border-top: 4px solid var(--red);
-  filter: drop-shadow(0 0 6px var(--red)); animation: fade .9s forwards; }
+.dmgdir { position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%; border-top: 4px solid var(--hurt);
+  filter: drop-shadow(0 0 6px var(--hurt)); animation: fade .9s forwards; }
 @keyframes fade { from { opacity: 1 } to { opacity: 0 } }
 .hud-hp { position: absolute; left: 32px; bottom: 30px; width: 300px; }
 .hud-hp .lbl, .hud-weapon .wname, .hud-info, .hud-style .rname { font-size: 11px; letter-spacing: .28em; color: var(--dim); }
 .hud-hp .bar { position: relative; height: 8px; margin-top: 6px; background: rgba(255, 255, 255, .07); clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%); }
 .hud-hp .fill { position: absolute; inset: 0; background: linear-gradient(90deg, #e8f4f8, #bffcff); transform-origin: left; transition: transform .15s; }
 .hud-hp .shield { position: absolute; inset: 0; background: var(--amber); opacity: .8; transform-origin: left; mix-blend-mode: screen; }
-.hud.low .hud-hp .fill { background: var(--red); }
+.hud.low .hud-hp .fill { background: var(--hurt); }
 .hud-hp .num { font-size: 34px; font-weight: 700; margin-top: 4px; font-family: var(--mono); letter-spacing: -.02em; }
 .hud-dash { display: flex; gap: 6px; margin-top: 6px; }
 .hud-dash i { width: 26px; height: 4px; background: rgba(255, 255, 255, .12); }
@@ -103,8 +105,8 @@ canvas#c { position: fixed; inset: 0; display: block; width: 100vw; height: 100v
 @keyframes pop { 0% { transform: scale(1.6) } 100% { transform: scale(1) } }
 .hud-style .rbar { width: 140px; height: 3px; background: rgba(255, 255, 255, .1); margin: 6px 0 0 auto; }
 .hud-style .rfill { height: 100%; background: currentColor; color: var(--cyan); transform-origin: left; background-color: var(--cyan); }
-.hud-vign { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(255, 30, 30, .55) 100%); opacity: 0; }
-.hud-lowhp { position: absolute; inset: 0; box-shadow: inset 0 0 160px rgba(255, 0, 20, .7); opacity: 0; }
+.hud-vign { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, color-mix(in srgb, var(--hurt) 55%, transparent) 100%); opacity: 0; }
+.hud-lowhp { position: absolute; inset: 0; box-shadow: inset 0 0 160px color-mix(in srgb, var(--hurt) 70%, transparent); opacity: 0; }
 .hud-bt { position: absolute; inset: 0; opacity: 0; transition: opacity .15s;
   background: repeating-linear-gradient(0deg, rgba(255, 43, 214, .05) 0 2px, transparent 2px 4px); box-shadow: inset 0 0 200px rgba(255, 43, 214, .35); }
 .hud-bt.on { opacity: 1; }

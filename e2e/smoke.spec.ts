@@ -275,3 +275,24 @@ test('skitters are forgiving to shoot: a shot skimming their back still lands', 
   });
   expect(r.hits).toBe(1);
 });
+
+test('colorblind telegraph palette persists and remaps enemy tells and HUD colors', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForSelector('.t-logo', { timeout: 60_000 });
+  await page.getByText('SETTINGS').click();
+  await page.locator('.seg button[data-cvd="deuteranopia"]').click();
+  await expect(page.locator('.seg button[data-cvd="deuteranopia"]')).toHaveClass(/on/);
+  await page.reload();
+  await page.waitForFunction(() => (window as any).__halogen);
+  const r = await page.evaluate(() => {
+    const g = (window as any).__halogen;
+    (window as any).__noLockPrompt = true;
+    g.renderer.setQuality('low'); g.menus.hide(); g.newRun(5); g.director = null; g.advance(0.2);
+    const V = g.player.pos.constructor;
+    const a = g.spawnEnemy('grunt', new V(0, 0, -4), false);
+    a.ai.onEnter('shoot');
+    return { tell: a.flareColor.getHex(), hurt: getComputedStyle(document.documentElement).getPropertyValue('--hurt').trim() };
+  });
+  expect(r.tell).toBe(0xffd400);
+  expect(r.hurt).toBe('#ff8c00');
+});

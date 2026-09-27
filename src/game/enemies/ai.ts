@@ -117,7 +117,7 @@ export class AndroidAI {
 
   private onEnter(name: string) {
     const a = this.a, ctx = this.ctx;
-    const tellColor = a.stats.attackColor;
+    const tellColor = ctx.game?.palette?.tell[a.type] ?? a.stats.attackColor;
     if (name === 'shoot') { this.windup = 0.6; a.flare = 1; a.flareColor.set(tellColor); ctx.sfx.play('telegraph', { pos: a.center, pitch: 1 }); }
     if (name === 'rush') { this.windup = 0.65; a.flare = 1; a.flareColor.set(tellColor); ctx.sfx.play('charger', { pos: a.center }); }
     if (name === 'smash') { this.windup = 0.4; a.flare = 1; a.flareColor.set(tellColor); }
@@ -155,7 +155,7 @@ export class AndroidAI {
         this.burst--;
         const m = a.muzzle();
         const aimAt = a.aimPoint.clone().add(new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.5) * 0.6, (Math.random() - 0.5)).multiplyScalar(1.1 + this.dist * 0.04));
-        ctx.game.enemyFire(m, aimAt.sub(m).normalize(), st.dmg, st.attackColor, a.type === 'foreman' ? 32 : 26);
+        ctx.game.enemyFire(m, aimAt.sub(m).normalize(), st.dmg, ctx.game.palette?.tell[a.type] ?? st.attackColor, a.type === 'foreman' ? 32 : 26);
         if (this.burst <= 0) this.cooldown = st.fireRate * (0.7 + Math.random() * 0.6);
       }
       return;

@@ -64,7 +64,7 @@ class LineStrike {
   t = 0; fired = false; dead = false; mesh: THREE.Mesh;
   constructor(private ctx: Ctx, private a: THREE.Vector3, private b: THREE.Vector3, private delay: number, private dmg: number, private color: number) {
     const len = a.distanceTo(b);
-    this.mesh = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, len), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff3b3b).multiplyScalar(3), transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
+    this.mesh = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, len), new THREE.MeshBasicMaterial({ color: new THREE.Color(ctx.game?.palette?.bossTell ?? 0xff3b3b).multiplyScalar(3), transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.mesh.position.copy(a).add(b).multiplyScalar(0.5); this.mesh.lookAt(b);
     ctx.scene.add(this.mesh);
     ctx.sfx.play('telegraph', { pos: a, pitch: 1.4 });
@@ -181,13 +181,13 @@ class Foreman implements Boss {
         this.burstT = 0.085; this.burst--;
         const m = a.muzzle();
         const tgt = pp.clone().add(ctx.player.vel.clone().multiplyScalar(0.12)).add(new THREE.Vector3((Math.random() - 0.5) * 1.5, (Math.random() - 0.5), (Math.random() - 0.5) * 1.5));
-        ctx.game.enemyFire(m, tgt.sub(m).normalize(), 9, 0xff3b3b, 36);
+        ctx.game.enemyFire(m, tgt.sub(m).normalize(), 9, ctx.game.palette.bossTell, 36);
       }
       return;
     }
     if (this.windup > 0) {
       this.windup -= dt;
-      a.flare = 1; a.flareColor.set(this.act === 'slam' ? 0x19f0ff : 0xff3b3b);
+      a.flare = 1; a.flareColor.set(this.act === 'slam' ? ctx.game.palette.bossAlt : ctx.game.palette.bossTell);
       a.moveSpeed = 0.3;
       if (this.windup <= 0) this.release(toP);
       return;
@@ -638,9 +638,9 @@ class Filament implements Boss {
     if (!this.beam && this.beamT <= 0) {
       this.beamT = this.phase2 ? 5 : 7;
       const dir = pp.clone().sub(this.pos).normalize();
-      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 0.8, 1).multiplyScalar(8), transparent: true, opacity: 0.2 }));
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 1, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(ctx.game.palette.beam).multiplyScalar(8), transparent: true, opacity: 0.2 }));
       ctx.scene.add(mesh);
-      this.beam = { t: 0, dir, mesh, light: ctx.lights.add({ type: LightType.Tube, pos: this.pos, pos2: this.pos, color: new THREE.Color(0xffc0ff), intensity: 0, radius: 6 }), telegraph: 1 };
+      this.beam = { t: 0, dir, mesh, light: ctx.lights.add({ type: LightType.Tube, pos: this.pos, pos2: this.pos, color: new THREE.Color(ctx.game.palette.beam), intensity: 0, radius: 6 }), telegraph: 1 };
       ctx.sfx.play('railCharge', { pos: this.pos });
     }
     if (this.beam) {

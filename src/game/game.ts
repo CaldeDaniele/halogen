@@ -36,6 +36,7 @@ import { Hud } from '../ui/hud';
 import { CombatText } from '../ui/combattext';
 import { pickCard } from '../ui/cards';
 import { explode } from './combat';
+import { palette, Palette, CvdMode } from './palette';
 import type { Seg } from '../physics/ragdoll';
 import { Menus } from '../ui/menus';
 import { DevOverlay } from '../ui/devoverlay';
@@ -73,6 +74,7 @@ export class Game {
   bolts!: Bolts;
   pickups!: Pickups;
   hud!: Hud;
+  palette: Palette = palette('default');
   combatText!: CombatText;
   menus!: Menus;
   dev!: DevOverlay;
@@ -584,6 +586,15 @@ export class Game {
   private fpsCap = 0;
   get fpsCapLabel() { return this.fpsCap ? this.fpsCap + 'fps' : 'vsync'; }
   private loop?: ReturnType<typeof createLoop>;
+  /** Colorblind telegraph palette: enemy/boss tells read it at the moment they fire; HUD colors are CSS vars. */
+  setPalette(mode: CvdMode) {
+    this.palette = palette(mode);
+    const css = document.documentElement.style, hex = (c: number) => '#' + c.toString(16).padStart(6, '0');
+    css.setProperty('--hurt', hex(this.palette.hurt));
+    css.setProperty('--kill', hex(this.palette.kill));
+    css.setProperty('--head', hex(this.palette.head));
+  }
+
   /** 0 = uncapped (vsync / native refresh). */
   setFpsCap(cap: number) {
     this.fpsCap = cap;
