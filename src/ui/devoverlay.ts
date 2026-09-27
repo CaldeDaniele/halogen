@@ -65,7 +65,7 @@ export class DevOverlay {
 draw calls ${r.render.calls}  tris ${(r.render.triangles / 1000).toFixed(0)}k
 lights ${L.stats.active}/${L.lights.length} clustered (16×9×24)  bodies ${gm.phys.world.bodies.len()}
 enemies ${gm.enemies.length}  ragdolls ${gm.corpses.size}/40  debris ${gm.debris.budget.size}/200
-particles ${gm.particles.count}  quality ${gm.renderer.quality}  timescale ${(gm.time.scale).toFixed(2)} (dev ×${this.timescale})
+particles ${gm.particles.count}  quality ${gm.renderer.quality}  cap ${gm.fpsCapLabel}  timescale ${(gm.time.scale).toFixed(2)} (dev ×${this.timescale})
 director stress ${(gm.director?.stress ?? 0).toFixed(2)} wave ${gm.director?.waveIndex ?? 0}/${gm.director?.waves.length ?? 0}
 seed ${gm.run?.seed}
 F2 physics ${this.physics ? 'ON' : 'off'} · F3 AI ${this.ai ? 'ON' : 'off'} · F4 clusters ${this.clusters ? 'ON' : 'off'} · [ ] timescale${this.benchResult ? '\n' + this.benchResult : ''}`;

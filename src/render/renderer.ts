@@ -49,6 +49,8 @@ export class Renderer {
   private slowT = 0;
   private ema = 16;
   onAutoDowngrade?: (q: Quality) => void;
+  /** frame interval imposed by an FPS cap; the governor must not mistake it for slowness */
+  minFrameMs = 0;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false, depth: true });
@@ -116,7 +118,7 @@ export class Renderer {
   private governor(dt: number) {
     if (!this.autoQuality || dt <= 0 || dt > 0.2 || document.hidden) return;
     this.ema += (dt * 1000 - this.ema) * 0.05;
-    this.slowT = this.ema > 21 ? this.slowT + dt : Math.max(0, this.slowT - dt * 2);
+    this.slowT = this.ema > Math.max(21, this.minFrameMs + 5) ? this.slowT + dt : Math.max(0, this.slowT - dt * 2);
     if (this.slowT > 4) {
       const order: Quality[] = ['low', 'medium', 'high', 'ultra'];
       const i = order.indexOf(this.quality);

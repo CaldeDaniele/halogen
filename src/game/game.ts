@@ -573,12 +573,23 @@ export class Game {
   }
 
   // ---------------------------------------------------------------- loop
+  private fpsCap = 0;
+  get fpsCapLabel() { return this.fpsCap ? this.fpsCap + 'fps' : 'vsync'; }
+  private loop?: ReturnType<typeof createLoop>;
+  /** 0 = uncapped (vsync / native refresh). */
+  setFpsCap(cap: number) {
+    this.fpsCap = cap;
+    if (this.loop) this.loop.limiter.cap = cap;
+    this.renderer.minFrameMs = cap > 0 ? 1000 / cap : 0;
+  }
+
   private start() {
-    const loop = createLoop({
+    const loop = this.loop = createLoop({
       step: STEP,
       onStep: dt => this.step(dt),
       onRender: (alpha, frameDt) => this.frame(alpha, frameDt),
     });
+    loop.limiter.cap = this.fpsCap;
     loop.start(() => {
       if (this.mode === 'play' && !this.input.locked && !(window as any).__noLockPrompt) return 0; // never simulate combat the player can't aim in
       return ((this.mode === 'play' || this.mode === 'dead' || this.mode === 'title' || this.mode === 'victory') ? this.time.scale : 0) * this.dev.timescale;
@@ -769,7 +780,11 @@ export class Game {
     }
   }
 
+  /** rendered frames since boot (tests, bench) */
+  frameCount = 0;
+
   private frame(alpha: number, realDt: number) {
+    this.frameCount++;
     const t0 = performance.now();
     const p = this.player;
     if (this.mode === 'play' || this.mode === 'dead') {

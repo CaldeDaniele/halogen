@@ -1,3 +1,25 @@
+/**
+ * Frame cap on top of the browser's vsync'd rAF. Uses a time-budget accumulator so a 60 cap on a
+ * 144 Hz display averages exactly 60 instead of snapping between 48 and 72.
+ */
+export class FrameLimiter {
+  /** max frames per second; 0 = uncapped (native refresh rate / vsync) */
+  cap = 0;
+  private acc = 0;
+  private prev = -1;
+
+  shouldRender(now: number) {
+    if (this.cap <= 0 || this.prev < 0) { this.prev = now; this.acc = 0; return true; }
+    const interval = 1000 / this.cap;
+    this.acc += now - this.prev;
+    this.prev = now;
+    if (this.acc > interval * 2) this.acc = interval; // after a stall: one frame now, no burst
+    if (this.acc + 0.5 < interval) return false;       // 0.5 ms slack absorbs rAF timestamp jitter
+    this.acc -= interval;
+    return true;
+  }
+}
+
 export interface LoopOptions {
   step: number;
   onStep: (dt: number) => void;
@@ -11,6 +33,7 @@ export function createLoop(opts: LoopOptions) {
   let acc = 0;
   let raf = 0;
   let last = 0;
+  const limiter = new FrameLimiter();
 
   function advance(frameDt: number, timescale = 1) {
     acc += frameDt;
@@ -28,6 +51,7 @@ export function createLoop(opts: LoopOptions) {
     last = performance.now();
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
+      if (!limiter.shouldRender(now)) return;
       const realDt = Math.min((now - last) / 1000, 0.25);
       last = now;
       onFrame?.(realDt);
@@ -38,5 +62,5 @@ export function createLoop(opts: LoopOptions) {
 
   function stop() { cancelAnimationFrame(raf); }
 
-  return { advance, start, stop };
+  return { advance, start, stop, limiter };
 }

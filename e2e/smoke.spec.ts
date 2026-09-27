@@ -164,3 +164,23 @@ test('walking through a door while holding a severed limb does not wedge the wor
   expect(r.mode).toBe('play');
   expect(r.held).toBe(0);
 });
+
+test('frame rate cap limits rendered frames and is selectable in settings', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForFunction(() => (window as any).__halogen, null, { timeout: 60_000 });
+  const measure = () => page.evaluate(async () => {
+    const g = (window as any).__halogen;
+    const f0 = g.frameCount;
+    await new Promise(r => setTimeout(r, 2000));
+    return (g.frameCount - f0) / 2;
+  });
+  const uncapped = await measure();
+  await page.getByText('SETTINGS').click();
+  await page.locator('.seg button[data-fps="30"]').click();
+  await expect(page.locator('.seg button[data-fps="30"]')).toHaveClass(/on/);
+  const capped = await measure();
+  console.log('fps uncapped', uncapped, 'capped@30', capped);
+  expect(capped).toBeLessThan(33);
+  expect(capped).toBeGreaterThan(24);
+  expect(uncapped).toBeGreaterThan(capped + 10);
+});

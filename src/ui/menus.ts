@@ -1,7 +1,8 @@
 import type { Quality } from '../render/renderer';
 
-interface Settings { quality: Quality; sens: number; fov: number; master: number; music: number; sfx: number }
-const DEFAULTS: Settings = { quality: 'high', sens: 1, fov: 103, master: 0.8, music: 0.55, sfx: 0.9 };
+interface Settings { quality: Quality; sens: number; fov: number; master: number; music: number; sfx: number; fpsCap: number }
+const DEFAULTS: Settings = { quality: 'high', sens: 1, fov: 103, master: 0.8, music: 0.55, sfx: 0.9, fpsCap: 0 };
+const FPS_CAPS = [0, 30, 60, 90, 120, 144];
 const KEY = 'halogen.settings.v1';
 const META = 'halogen.meta.v1';
 
@@ -32,6 +33,7 @@ export class Menus {
     g.rig.baseHFov = s.fov;
     g.sfx.volumes = { master: s.master, music: s.music, sfx: s.sfx };
     g.sfx.applyVolumes();
+    g.setFpsCap(s.fpsCap);
   }
 
   hide() { this.el.innerHTML = ''; this.el.className = 'menu'; }
@@ -125,14 +127,18 @@ export class Menus {
     this.el.innerHTML = `<div class="p-box wide"><div class="p-title">SETTINGS</div>
       <div class="set">
         <label>QUALITY</label><div class="seg">${(['low', 'medium', 'high', 'ultra'] as Quality[]).map(q => `<button data-q="${q}" class="${q === s.quality ? 'on' : ''}">${q.toUpperCase()}</button>`).join('')}</div>
+        <label>FRAME RATE CAP</label><div class="seg fps">${FPS_CAPS.map(c => `<button data-fps="${c}" class="${c === s.fpsCap ? 'on' : ''}">${c === 0 ? 'VSYNC' : c}</button>`).join('')}</div>
         ${this.slider('sens', 'MOUSE SENSITIVITY', 0.2, 3, 0.05, s.sens)}
         ${this.slider('fov', 'FIELD OF VIEW', 80, 120, 1, s.fov)}
         ${this.slider('master', 'MASTER VOLUME', 0, 1, 0.01, s.master)}
         ${this.slider('music', 'MUSIC', 0, 1, 0.01, s.music)}
         ${this.slider('sfx', 'EFFECTS', 0, 1, 0.01, s.sfx)}
       </div><div class="p-btns"></div></div>`;
-    this.el.querySelectorAll<HTMLButtonElement>('.seg button').forEach(b => b.addEventListener('click', () => {
+    this.el.querySelectorAll<HTMLButtonElement>('.seg button[data-q]').forEach(b => b.addEventListener('click', () => {
       s.quality = b.dataset.q as Quality; save(KEY, s); this.apply(); this.showSettings(back);
+    }));
+    this.el.querySelectorAll<HTMLButtonElement>('.seg button[data-fps]').forEach(b => b.addEventListener('click', () => {
+      s.fpsCap = parseInt(b.dataset.fps!, 10); save(KEY, s); this.apply(); this.showSettings(back);
     }));
     this.el.querySelectorAll<HTMLInputElement>('input[type=range]').forEach(inp => inp.addEventListener('input', () => {
       (s as any)[inp.name] = parseFloat(inp.value);
