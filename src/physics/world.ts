@@ -78,6 +78,21 @@ export class PhysicsWorld {
     return { body, col };
   }
 
+  /**
+   * Colliders overlapping a sphere. Collected first on purpose: Rapier forbids mutating bodies
+   * inside an intersectionsWithShape callback (the call throws and is silently swallowed).
+   */
+  overlapBall(pos: { x: number; y: number; z: number }, radius: number, filter?: number): RAPIER.Collider[] {
+    const out: RAPIER.Collider[] = [];
+    this.world.intersectionsWithShape(pos, { x: 0, y: 0, z: 0, w: 1 }, new RAPIER.Ball(radius), c => { out.push(c); return true; }, undefined, filter);
+    return out;
+  }
+
+  /** False once a body has been removed; touching a removed body traps the wasm and wedges the world. */
+  bodyAlive(b: RAPIER.RigidBody | null | undefined) {
+    return !!b && this.world.bodies.contains(b.handle) && this.world.getRigidBody(b.handle) === b;
+  }
+
   /** Ray cast returning hit point, normal and collider. */
   ray(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, maxToi: number, filter: number, exclude?: RAPIER.Collider | RAPIER.RigidBody) {
     const ray = new RAPIER.Ray({ x: ox, y: oy, z: oz }, { x: dx, y: dy, z: dz });

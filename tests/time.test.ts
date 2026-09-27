@@ -32,3 +32,13 @@ describe('Time', () => {
     expect(t.isBulletTime).toBe(true);
   });
 });
+
+describe('Time.reset', () => {
+  it('clears slowmo and hitstop (death slow-mo must not leak into a retried run)', () => {
+    const t = new Time();
+    t.slowmo(0.15, 2.5); t.hitstop(100); t.update(0.01);
+    t.reset(); t.update(0.01);
+    expect(t.scale).toBe(1);
+    expect(t.isBulletTime).toBe(false);
+  });
+});

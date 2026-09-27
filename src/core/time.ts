@@ -13,6 +13,8 @@ export class Time {
   get isBulletTime() { return this.slowLeft > 0; }
   get bulletTimeLeft() { return this.slowLeft; }
 
+  reset() { this.scale = 1; this.slowScale = 1; this.slowLeft = 0; this.easeT = 0; this.stopLeft = 0; }
+
   slowmo(scale: number, duration: number) {
     this.slowScale = scale;
     this.slowLeft = Math.max(this.slowLeft, duration);

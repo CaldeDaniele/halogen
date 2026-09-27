@@ -42,8 +42,10 @@ export class DebrisSystem {
   }
   remove(d: Debris) { this.budget.remove(d); this.kill(d); }
   private kill(d: Debris) {
+    this.ctx.game?.kinetic?.forgetBody(d.body);
     this.ctx.phys.removeBody(d.body);
     d.mesh.removeFromParent();
+    d.mesh.geometry.dispose();
   }
   clear() { for (const d of [...this.budget.items]) this.remove(d); }
 }
@@ -118,7 +120,7 @@ export class Prop {
     const q = new THREE.Quaternion(r.x, r.y, r.z, r.w);
     const lv = this.body.linvel();
     if (this.spec.kind === 'barrel') {
-      ctx.phys.removeBody(this.body);
+      ctx.game?.kinetic?.forgetBody(this.body); ctx.phys.removeBody(this.body);
       this.mesh.removeFromParent();
       if (this.light) ctx.lights.remove(this.light);
       // slight delay makes chain reactions read as a cascade
@@ -129,7 +131,7 @@ export class Prop {
       const mat = this.spec.kind === 'crate' ? (this.mesh as THREE.Mesh).material as THREE.Material : ctx.mats.get('chunk');
       const dir = h?.dir ?? new THREE.Vector3(0, 1, 0);
       const force = Math.min(12, (h?.impulse ?? 8) * 0.4 + 3);
-      ctx.phys.removeBody(this.body);
+      ctx.game?.kinetic?.forgetBody(this.body); ctx.phys.removeBody(this.body);
       this.mesh.removeFromParent();
       for (const c of chunks) {
         const lp = new THREE.Vector3(...c.center).applyQuaternion(q).add(pos);
@@ -151,11 +153,11 @@ export class Prop {
     const t = this.body.translation(), r = this.body.rotation();
     this.mesh.position.set(t.x, t.y, t.z); this.mesh.quaternion.set(r.x, r.y, r.z, r.w);
     if (this.light) this.light.pos.set(t.x, t.y + 0.2, t.z);
-    if (t.y < -20 && !this.dead) { this.dead = true; this.ctx.phys.removeBody(this.body); this.mesh.removeFromParent(); if (this.light) this.ctx.lights.remove(this.light); }
+    if (t.y < -20 && !this.dead) { this.dead = true; this.ctx.game?.kinetic?.forgetBody(this.body); this.ctx.phys.removeBody(this.body); this.mesh.removeFromParent(); if (this.light) this.ctx.lights.remove(this.light); }
   }
 
   dispose() {
-    if (!this.dead) { this.ctx.phys.removeBody(this.body); this.mesh.removeFromParent(); }
+    if (!this.dead) { this.ctx.game?.kinetic?.forgetBody(this.body); this.ctx.phys.removeBody(this.body); this.mesh.removeFromParent(); }
     if (this.light) this.ctx.lights.remove(this.light);
   }
 }

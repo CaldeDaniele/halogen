@@ -512,6 +512,7 @@ export class Android {
 
   dispose() {
     const ctx = this.ctx;
+    for (const sg of this.body.segs) ctx.game?.kinetic?.forgetBody(sg.body);
     ctx.lights.remove(this.core);
     if (this.mover) ctx.phys.world.removeCollider(this.mover, false);
     if (this.kcc) ctx.phys.world.removeCharacterController(this.kcc);

@@ -176,6 +176,7 @@ export class Game {
   newRun(seed?: number) {
     this.sfx.resume();
     const s = seed ?? ((Math.random() * 2 ** 31) | 0);
+    this.time.reset();
     this.run = new RunState(s);
     this.ctx.run = this.run;
     this.rng = new Rng(s);
@@ -220,6 +221,7 @@ export class Game {
   }
 
   private clearRoom() {
+    this.kinetic.drop(); // release everything before any body it references is removed
     for (const a of this.enemies) this.disposeAndroid(a);
     for (const a of [...this.corpses.items]) this.disposeAndroid(a);
     this.corpses.clear();
@@ -423,7 +425,7 @@ export class Game {
       if (headshot && run.mods.headhunter) { this.weapons.refill(); run.addFocus(0.15); }
       if (kinetic && run.mods.siphon) run.heal(run.mods.siphon);
       if (run.mods.adrenal) run.shield = Math.min(50, run.shield + 10);
-      if (run.mods.volatile) this.later(0.55, () => explode(this.ctx, enemy.center, 4.2, 60, 22, 'player', 0xff5a1a, new Set(['volatile'])));
+      if (run.mods.volatile && enemy instanceof Android) this.later(0.55, () => explode(this.ctx, enemy.center, 4.2, 60, 22, 'player', 0xff5a1a, new Set(['volatile'])));
       if (Math.random() < (run.mods.scavenger ? 0.4 : 0.18) || run.hp < run.maxHp * 0.3 && Math.random() < 0.4) this.pickups.spawn(pos, 'health');
       if (Math.random() < 0.15) this.pickups.spawn(pos, 'lumen');
       // hit-stop + juice scale with kill quality
@@ -432,7 +434,7 @@ export class Game {
       this.rig.addTrauma(0.12);
       // move to corpse budget
       this.enemies = this.enemies.filter(e => e !== enemy);
-      if (!enemy.isBoss) this.corpses.add(enemy);
+      if (enemy instanceof Android) this.corpses.add(enemy);
     });
     ev.on('limbSevered', ({ pos }) => { if (this.run.mods.graverobber) this.pickups.spawn(pos, 'lumen'); this.run.style = Math.min(6.99, this.run.style + 0.1); });
     ev.on('explosion', () => { this.music.intensity = Math.min(1, this.music.intensity + 0.2); });
@@ -454,7 +456,7 @@ export class Game {
   private onPropDestroyed(_p: Prop) { this.run.score += 10; }
 
   // ---------------------------------------------------------------- rooms
-  private async onRoomCleared() {
+  private onRoomCleared() {
     const room = this.room!;
     if (room.cleared) return;
     room.cleared = true;
@@ -470,9 +472,13 @@ export class Game {
       this.music.sting('victory');
       if (this.run.sector >= 2) { this.later(2.5, () => this.victory()); return; }
     }
-    await new Promise(r => setTimeout(r, 1100));
-    if (this.mode !== 'play') return;
+    // sim-time delay: pauses with the game, so pausing here can't skip the reward/doors
+    this.later(1.1, () => { if (this.room === room && this.mode === 'play') this.presentReward(room); });
+  }
+
+  private async presentReward(room: Room) {
     await this.rewardPick(this.node.reward);
+    if (this.room !== room) return;
     room.setDoorsOpen(true);
     for (const l of this.doorLabels) l.visible = true;
     if (this.node.type === 'boss') {
@@ -553,6 +559,7 @@ export class Game {
   }
 
   private victory() {
+    if (this.mode === 'dead' || this.mode === 'title') return;
     this.unlock({ victory: true });
     this.mode = 'victory';
     this.input.exitLock();
@@ -572,7 +579,10 @@ export class Game {
       onStep: dt => this.step(dt),
       onRender: (alpha, frameDt) => this.frame(alpha, frameDt),
     });
-    loop.start(() => ((this.mode === 'play' || this.mode === 'dead' || this.mode === 'title' || this.mode === 'victory') ? this.time.scale : 0) * this.dev.timescale, realDt => this.time.update(realDt));
+    loop.start(() => {
+      if (this.mode === 'play' && !this.input.locked && !(window as any).__noLockPrompt) return 0; // never simulate combat the player can't aim in
+      return ((this.mode === 'play' || this.mode === 'dead' || this.mode === 'title' || this.mode === 'victory') ? this.time.scale : 0) * this.dev.timescale;
+    }, realDt => this.time.update(realDt));
   }
 
   private step(dt: number) {
@@ -619,12 +629,12 @@ export class Game {
 
     if (playing && this.room) {
       // director
-      const alive = this.enemies.filter(e => e.alive).length;
-      const wave = this.director?.update(dt, alive, run.hp / run.maxHp);
+      const wave = this.director?.update(dt, this.enemies.filter(e => e.alive).length, run.hp / run.maxHp);
       if (wave) this.spawnWave(wave);
+      const alive = this.enemies.filter(e => e.alive).length;
       const combat = alive > 0 || (this.director && !this.director.done);
       this.music.intensity += ((combat ? Math.min(1, 0.55 + alive * 0.08) : 0) - this.music.intensity) * Math.min(1, dt * 0.8);
-      if (!this.room.cleared && this.director?.done && alive === 0 && (!this.boss || this.boss.dead) && this.node.type !== 'rest') this.onRoomCleared();
+      if (!wave && !this.room.cleared && this.director?.done && alive === 0 && (!this.boss || this.boss.dead) && this.node.type !== 'rest') this.onRoomCleared();
       // doors
       if (this.room.cleared) this.room.doors.forEach((d, i) => { if (d.open > 0.6 && this.player.pos.distanceTo(d.world.clone().setY(this.player.pos.y)) < 1.6) this.goThroughDoor(i); });
       // light & lumen
@@ -843,6 +853,9 @@ export class Game {
     return res;
   }
 
+  /** Debug/test hook: an ion-grenade-sized blast at p. */
+  debugExplode(p: THREE.Vector3, radius = 5, damage = 95, impulse = 34) { explode(this.ctx, p, radius, damage, impulse, 'player', 0xb46bff); }
+
   /** Debug/test hook: advance the simulation deterministically (independent of rAF) and render once. */
   advance(seconds: number, input?: { keys?: string[]; fire?: boolean; yaw?: number; pitch?: number }) {
     const n = Math.round(seconds * 120);
@@ -939,7 +952,7 @@ export class Game {
     this.sfx.play('btIn', { pos: p });
     const tick = () => {
       t += 0.05;
-      this.phys.world.intersectionsWithShape(p, { x: 0, y: 0, z: 0, w: 1 }, new RAPIER.Ball(7), col => {
+      for (const col of this.phys.overlapBall(p, 7)) {
         const b = col.parent();
         if (b && b.isDynamic()) {
           const bt = b.translation();
@@ -949,8 +962,7 @@ export class Game {
         }
         const o = this.phys.ownerOf(col.handle) as Owner | undefined;
         if (o?.android?.state === 'alive') o.android.stagger(undefined, undefined, 1.5);
-        return true;
-      });
+      }
       this.particles.sparksAt(p, new THREE.Vector3(0, 1, 0), 6, 0x8a5cff, 5, 1.5, 0.4);
       if (t < 1.4) this.later(0.05, tick);
       else explode(this.ctx, p, 5, 70, 30, 'player', 0x8a5cff);

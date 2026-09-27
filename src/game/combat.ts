@@ -41,10 +41,11 @@ export function dealHit(ctx: Ctx, collider: RAPIER.Collider, h: HitInfo): Owner 
 const _v = new THREE.Vector3();
 
 export function explode(ctx: Ctx, pos: THREE.Vector3, radius: number, damage: number, impulse: number, source: HitInfo['source'], color: THREE.ColorRepresentation = 0xb46bff, tags?: Set<string>) {
-  const w = ctx.phys.world;
   const hitBodies = new Set<number>();
   const hitOwners = new Set<Owner>();
-  w.intersectionsWithShape(pos, { x: 0, y: 0, z: 0, w: 1 }, new RAPIER.Ball(radius), col => {
+  // collect first, act after: Rapier forbids body mutation inside the query callback
+  for (const col of ctx.phys.overlapBall(pos, radius)) {
+    if (!ctx.phys.world.getCollider(col.handle)) continue; // removed by an earlier hit this blast
     const t = col.translation();
     _v.set(t.x - pos.x, t.y - pos.y, t.z - pos.z);
     const d = Math.max(0.3, _v.length());
@@ -54,7 +55,7 @@ export function explode(ctx: Ctx, pos: THREE.Vector3, radius: number, damage: nu
     if (owner?.kind === 'player') {
       if (source !== 'player') ctx.game.damagePlayer(damage * fall * 0.6, pos);
       else ctx.game.selfBlast(dir, impulse * fall * 0.5);
-      return true;
+      continue;
     }
     // one hit per entity (an android has many segment colliders)
     const key = owner?.android ?? owner;
@@ -62,14 +63,14 @@ export function explode(ctx: Ctx, pos: THREE.Vector3, radius: number, damage: nu
       hitOwners.add(key);
       owner.hit({ point: new THREE.Vector3(t.x, t.y, t.z), normal: dir.clone().negate(), dir, damage: damage * (0.35 + 0.65 * fall), impulse: impulse * fall, source, weapon: 'explosion', collider: col, tags });
     }
-    const body = col.parent();
-    if (body && body.isDynamic() && !hitBodies.has(body.handle)) {
+    const body = ctx.phys.world.getCollider(col.handle) ? col.parent() : null;
+    if (body && ctx.phys.bodyAlive(body) && body.isDynamic() && !hitBodies.has(body.handle)) {
       hitBodies.add(body.handle);
-      const k = impulse * fall * Math.min(1, body.mass() / 10 + 0.2);
+      // mass-proportional up to 60 kg: similar Δv for limbs, crates and barrels — explosions should launch things
+      const k = impulse * fall * Math.min(body.mass(), 60) * 0.22;
       body.applyImpulseAtPoint({ x: dir.x * k, y: dir.y * k, z: dir.z * k }, { x: t.x, y: t.y, z: t.z }, true);
     }
-    return true;
-  });
+  }
   const sp = ctx.particles;
   sp.sparksAt(pos, new THREE.Vector3(0, 1, 0), 60, 0xffc080, 16, 1.4, 0.8);
   sp.sparksAt(pos, new THREE.Vector3(0, 1, 0), 30, color, 12, 1.4, 0.6);

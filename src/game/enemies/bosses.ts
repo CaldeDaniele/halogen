@@ -231,7 +231,7 @@ class Foreman implements Boss {
       const ctx = this.ctx;
       ctx.time.slowmo(0.2, 1.8);
       ctx.sfx.play('bossRoar', { pos: this.a.center });
-      for (let i = 0; i < 6; i++) ctx.game.later(0.15 + i * 0.22, () => explode(ctx, this.a.body.comPosition.add(new THREE.Vector3((Math.random() - 0.5) * 3, Math.random() * 2, (Math.random() - 0.5) * 3)), 3, 0, 20, 'player', i % 2 ? 0x19f0ff : 0xffb02e));
+      for (let i = 0; i < 6; i++) ctx.game.later(0.15 + i * 0.22, () => ctx.phys.bodyAlive(this.a.body.root.body) && explode(ctx, this.a.body.comPosition.add(new THREE.Vector3((Math.random() - 0.5) * 3, Math.random() * 2, (Math.random() - 0.5) * 3)), 3, 0, 20, 'player', i % 2 ? 0x19f0ff : 0xffb02e));
       ctx.game.later(1.6, () => { this.dead = true; });
     }
   }
@@ -694,7 +694,7 @@ class Filament implements Boss {
     this.group.removeFromParent();
     if (this.beam) { this.beam.mesh.removeFromParent(); this.ctx.lights.remove(this.beam.light); }
     for (const t of this.tendrils) {
-      for (const s of t.segs) this.ctx.phys.removeBody(s);
+      for (const s of t.segs) { this.ctx.game.kinetic.forgetBody(s); this.ctx.phys.removeBody(s); }
       this.ctx.phys.removeBody(t.anchor);
       for (const m of t.meshes) m.removeFromParent();
       this.ctx.lights.remove(t.light);

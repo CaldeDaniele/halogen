@@ -32,10 +32,27 @@ export class KineticHand {
 
   get holding() { return this.held.length > 0; }
 
+  /** Drop references to bodies removed elsewhere (fractured props, evicted debris, disposed limbs). */
+  private prune() {
+    const before = this.held.length;
+    this.held = this.held.filter(h => this.ctx.phys.bodyAlive(h.body));
+    if (before && !this.held.length) this.endHold();
+  }
+
+  /** Called by any system about to remove a body the hand might be holding. */
+  forgetBody(body: RAPIER.RigidBody) {
+    const h = this.held.find(x => x.body === body);
+    if (!h) return;
+    this.held.splice(this.held.indexOf(h), 1);
+    this.thrown.delete(body.handle);
+    if (!this.held.length) this.endHold();
+  }
+
   update(dt: number, input: Input) {
     const ctx = this.ctx, run = ctx.run;
     this.cool = Math.max(0, this.cool - dt);
     for (const [h, v] of this.thrown) if (ctx.time.simTime - v.t > 2.5) this.thrown.delete(h);
+    this.prune();
 
     if (input.pressed('Mouse2') && !this.holding && this.cool <= 0) this.tryGrab();
     if (this.holding) {
@@ -147,6 +164,7 @@ export class KineticHand {
   }
 
   private restore(h: Held) {
+    if (!this.ctx.phys.bodyAlive(h.body)) return;
     h.body.setGravityScale(1, true);
     h.body.setAngularDamping(h.android ? 0.6 : 0.2);
   }
@@ -158,9 +176,10 @@ export class KineticHand {
     if (!this.held.length) this.endHold();
   }
 
-  drop() { for (const h of [...this.held]) this.dropOne(h); }
+  drop() { this.prune(); for (const h of [...this.held]) this.dropOne(h); }
 
   private throw() {
+    this.prune();
     const ctx = this.ctx;
     const cam = ctx.camera;
     const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
